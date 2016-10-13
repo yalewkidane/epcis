@@ -92,14 +92,14 @@ public class SensorEventWriteConverter implements
 		// ReadPoint
 		if (sensorEventType.getReadPoint() != null) {
 			ReadPointType readPointType = sensorEventType.getReadPoint();
-			DBObject readPoint = getReadPointObject(readPointType);
+			DBObject readPoint = getReadPointObject(readPointType,1);
 			dbo.put("readPoint", readPoint);
 		}
 		// BizLocation
 		if (sensorEventType.getBizLocation() != null) {
 			BusinessLocationType bizLocationType = sensorEventType
 					.getBizLocation();
-			DBObject bizLocation = getBizLocationObject(bizLocationType);
+			DBObject bizLocation = getBizLocationObject(bizLocationType,1);
 			dbo.put("bizLocation", bizLocation);
 		}
 		// BizTransaction
