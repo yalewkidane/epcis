@@ -196,7 +196,6 @@
   },
   "required": [
     "eventTime",
-    "eventTimeZoneOffset",
-  ],
+    "eventTimeZoneOffset"],
  "additionalProperties": false
 }
