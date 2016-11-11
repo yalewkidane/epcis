@@ -42,6 +42,10 @@ public class TransformationEvent{//    extends EPCISEvent{
     @XmlElement(required = true)
     protected String eventTimeZoneOffset;
 
+    @OneToOne
+	@JoinColumn(name="baseExtension_id")
+    protected EPCISEventExtension baseExtension;
+    
 	@OneToOne
 	@JoinColumn(name="inputEPCList_id")
 	protected EPCList inputEPCList;
@@ -84,6 +88,11 @@ public class TransformationEvent{//    extends EPCISEvent{
 	@JoinColumn(name="TransformationEventExtension_id")
     protected TransformationEventExtension extension;
     
+    @OneToOne
+    @JoinColumn(name="baseExtensionMaps_id")
+    protected ExtensionMaps extensionMaps;
+    
+    
     @Transient 
     @XmlAnyElement(lax = true)
     protected List<Object> any;
@@ -115,6 +124,13 @@ public class TransformationEvent{//    extends EPCISEvent{
 	}
 	public void setEventTimeZoneOffset(String eventTimeZoneOffset) {
 		this.eventTimeZoneOffset = eventTimeZoneOffset;
+	}
+	
+	public EPCISEventExtension getBaseExtension() {
+		return baseExtension;
+	}
+	public void setBaseExtension(EPCISEventExtension baseExtension) {
+		this.baseExtension = baseExtension;
 	}
 	public QuantityList getInputQuantityList() {
 		return inputQuantityList;
@@ -205,6 +221,12 @@ public class TransformationEvent{//    extends EPCISEvent{
 	}
 	public void setInputEPCList(EPCList inputEPCList) {
 		this.inputEPCList = inputEPCList;
+	}
+	public ExtensionMaps getExtensionMaps() {
+		return extensionMaps;
+	}
+	public void setExtensionMaps(ExtensionMaps extensionMaps) {
+		this.extensionMaps = extensionMaps;
 	}
 
     

@@ -37,12 +37,15 @@ public class ObjectEventExtension {
 	@OneToOne
 	@JoinColumn(name="ilmd_id")
     protected ILMD ilmd;
+	
+	
 	@OneToOne
 	@JoinColumn(name="objectEventExtension2_id")
-    protected ObjectEventExtension2 extension;
-	@Transient
-    @XmlAnyAttribute
-    private Map<QName, String> otherAttributes = new HashMap<QName, String>();
+    protected ObjectEventExtension2 extension2;
+	
+//	@Transient
+//    @XmlAnyAttribute
+//    private Map<QName, String> otherAttributes = new HashMap<QName, String>();
 
 	
 	
@@ -58,9 +61,9 @@ public class ObjectEventExtension {
 
 	
 
-	public void setOtherAttributes(Map<QName, String> otherAttributes) {
-		this.otherAttributes = otherAttributes;
-	}
+//	public void setOtherAttributes(Map<QName, String> otherAttributes) {
+//		this.otherAttributes = otherAttributes;
+//	}
 
 	/**
      * Gets the value of the quantityList property.
@@ -158,6 +161,14 @@ public class ObjectEventExtension {
         this.ilmd = value;
     }
 
+	public ObjectEventExtension2 getExtension2() {
+		return extension2;
+	}
+
+	public void setExtension2(ObjectEventExtension2 extension2) {
+		this.extension2 = extension2;
+	}
+
     /**
      * Gets the value of the extension property.
      * 
@@ -166,22 +177,7 @@ public class ObjectEventExtension {
      *     {@link ObjectEventExtension2 }
      *     
      */
-    public ObjectEventExtension2 getExtension() {
-        return extension;
-    }
-
-    /**
-     * Sets the value of the extension property.
-     * 
-     * @param value
-     *     allowed object is
-     *     {@link ObjectEventExtension2 }
-     *     
-     */
-    public void setExtension(ObjectEventExtension2 value) {
-        this.extension = value;
-    }
-
+  
     /**
      * Gets a map that contains attributes that aren't bound to any typed property on this class.
      * 
@@ -196,8 +192,8 @@ public class ObjectEventExtension {
      * @return
      *     always non-null
      */
-    public Map<QName, String> getOtherAttributes() {
-        return otherAttributes;
-    }
+//    public Map<QName, String> getOtherAttributes() {
+//        return otherAttributes;
+//    }
 
 }

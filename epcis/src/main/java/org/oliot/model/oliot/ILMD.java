@@ -34,6 +34,12 @@ public class ILMD {
 	@Id
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	private int id;
+	
+	//added to capture ilmd hierarchical extension
+    @OneToOne
+    @JoinColumn(name="baseExtensionMaps_id")
+    protected ExtensionMaps extensionMaps;
+	
 	@OneToOne
 	@JoinColumn(name="iLMD_id")
     protected ILMDExtension extension;
@@ -45,8 +51,8 @@ public class ILMD {
     @XmlAnyAttribute
     private Map<QName, String> otherAttributes = new HashMap<QName, String>();
 	
-	@OneToMany
-	List<MapExt> mapExt=new ArrayList<MapExt>();
+//	@OneToMany
+//	List<MapExt> mapExt=new ArrayList<MapExt>();
 
     
     public ILMDExtension getExtension() {
@@ -121,13 +127,13 @@ public class ILMD {
 		this.id = id;
 	}
 
-	public List<MapExt> getMapExt() {
-		return mapExt;
-	}
-
-	public void setMapExt(List<MapExt> mapExt) {
-		this.mapExt = mapExt;
-	}
+//	public List<MapExt> getMapExt() {
+//		return mapExt;
+//	}
+//
+//	public void setMapExt(List<MapExt> mapExt) {
+//		this.mapExt = mapExt;
+//	}
 
 	public void setAny(List<Object> any) {
 		this.any = any;
@@ -135,6 +141,14 @@ public class ILMD {
 
 	public void setOtherAttributes(Map<QName, String> otherAttributes) {
 		this.otherAttributes = otherAttributes;
+	}
+
+	public ExtensionMaps getExtensionMaps() {
+		return extensionMaps;
+	}
+
+	public void setExtensionMaps(ExtensionMaps extensionMaps) {
+		this.extensionMaps = extensionMaps;
 	}
     
     

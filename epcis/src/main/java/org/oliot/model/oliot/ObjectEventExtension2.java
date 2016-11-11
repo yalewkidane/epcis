@@ -8,7 +8,7 @@
 
 package org.oliot.model.oliot;
 
-import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +17,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
+
 import javax.persistence.Transient;
 
 
@@ -26,13 +26,17 @@ import javax.persistence.Transient;
 public class ObjectEventExtension2 {
 	@Id @GeneratedValue(strategy=GenerationType.AUTO)
 	private int id;
-	@OneToMany
-	List<MapExt> mapExt=new ArrayList<MapExt>();
+	
+	
+	
+//	@OneToMany
+//	List<MapExt> mapExt=new ArrayList<MapExt>();
 	   
 	
 	   
 	@Transient
     protected List<String> any;
+	
 	@Transient
     private Map<String, String> otherAttributes = new HashMap<String, String>();
 	
@@ -55,12 +59,12 @@ public class ObjectEventExtension2 {
 	public void setOtherAttributes(Map<String, String> otherAttributes) {
 		this.otherAttributes = otherAttributes;
 	}
-	public List<MapExt> getMapExt() {
-		return mapExt;
-	}
-	public void setMapExt(List<MapExt> mapExt) {
-		this.mapExt = mapExt;
-	}
+//	public List<MapExt> getMapExt() {
+//		return mapExt;
+//	}
+//	public void setMapExt(List<MapExt> mapExt) {
+//		this.mapExt = mapExt;
+//	}
 	
 	
 	

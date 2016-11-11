@@ -41,6 +41,10 @@ public class QuantityEvent{//    extends EPCISEvent{
     @XmlElement(required = true)
     protected String eventTimeZoneOffset;
 
+    @OneToOne
+	@JoinColumn(name="baseExtension_id")
+    protected EPCISEventExtension baseExtension;
+    
     @XmlElement(required = true)
     protected String epcClass;
     protected int quantity;
@@ -58,6 +62,11 @@ public class QuantityEvent{//    extends EPCISEvent{
     @OneToOne
 	@JoinColumn(name="quantityEventExtension_id")
     protected QuantityEventExtension extension;
+    
+    @OneToOne
+    @JoinColumn(name="baseExtensionMaps_id")
+    protected ExtensionMaps extensionMaps;
+    
     @Transient
     @XmlAnyElement(lax = true)
     protected List<Object> any;
@@ -97,6 +106,15 @@ public class QuantityEvent{//    extends EPCISEvent{
 
 	public void setEventTimeZoneOffset(String eventTimeZoneOffset) {
 		this.eventTimeZoneOffset = eventTimeZoneOffset;
+	}
+
+	
+	public EPCISEventExtension getBaseExtension() {
+		return baseExtension;
+	}
+
+	public void setBaseExtension(EPCISEventExtension baseExtension) {
+		this.baseExtension = baseExtension;
 	}
 
 	public void setAny(List<Object> any) {
@@ -308,5 +326,13 @@ public class QuantityEvent{//    extends EPCISEvent{
         }
         return this.any;
     }
+
+	public ExtensionMaps getExtensionMaps() {
+		return extensionMaps;
+	}
+
+	public void setExtensionMaps(ExtensionMaps extensionMaps) {
+		this.extensionMaps = extensionMaps;
+	}
 
 }

@@ -176,7 +176,7 @@ public  class EPCISEvent {
      * 
      * @return
      *     possible object is
-     *     {@link EPCISEventExtension }
+     *     {@link EPCISEventExtension_R }
      *     
      */
     public EPCISEventExtension getBaseExtension() {
@@ -188,7 +188,7 @@ public  class EPCISEvent {
      * 
      * @param value
      *     allowed object is
-     *     {@link EPCISEventExtension }
+     *     {@link EPCISEventExtension_R }
      *     
      */
     public void setBaseExtension(EPCISEventExtension value) {

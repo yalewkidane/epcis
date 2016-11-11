@@ -1,6 +1,7 @@
 package org.oliot.epcis.serde.mysql;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +11,9 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.log4j.Level;
 import org.oliot.epcis.configuration.Configuration;
@@ -22,9 +26,13 @@ import org.oliot.model.epcis.BusinessLocationExtensionType;
 import org.oliot.model.epcis.BusinessLocationType;
 import org.oliot.model.epcis.BusinessTransactionListType;
 import org.oliot.model.epcis.BusinessTransactionType;
+import org.oliot.model.epcis.CorrectiveEventIDsType;
 import org.oliot.model.epcis.DestinationListType;
 import org.oliot.model.epcis.EPC;
+import org.oliot.model.epcis.EPCISEventExtension2Type;
+import org.oliot.model.epcis.EPCISEventExtensionType;
 import org.oliot.model.epcis.EPCListType;
+import org.oliot.model.epcis.ErrorDeclarationType;
 import org.oliot.model.epcis.IDListType;
 import org.oliot.model.epcis.ILMDExtensionType;
 import org.oliot.model.epcis.ILMDType;
@@ -37,10 +45,6 @@ import org.oliot.model.epcis.QuantityEventType;
 import org.oliot.model.epcis.QuantityListType;
 import org.oliot.model.epcis.ReadPointExtensionType;
 import org.oliot.model.epcis.ReadPointType;
-import org.oliot.model.epcis.SensingElementType;
-import org.oliot.model.epcis.SensingListType;
-import org.oliot.model.epcis.SensorEventExtensionType;
-import org.oliot.model.epcis.SensorEventType;
 import org.oliot.model.epcis.SourceDestType;
 import org.oliot.model.epcis.SourceListType;
 import org.oliot.model.epcis.TransactionEventExtension2Type;
@@ -57,9 +61,11 @@ import org.oliot.model.oliot.Action;
 import org.oliot.model.oliot.AggregationEvent;
 import org.oliot.model.oliot.Attribute;
 import org.oliot.model.oliot.BusinessTransaction;
+import org.oliot.model.oliot.CorrectiveEventID;
 import org.oliot.model.oliot.EPCList;
 import org.oliot.model.oliot.EPCN;
-import org.oliot.model.oliot.MapExt;
+import org.oliot.model.oliot.ExtensionMap;
+//import org.oliot.model.oliot.MapExt;
 import org.oliot.model.oliot.ObjectEvent;
 import org.oliot.model.oliot.QuantityElement;
 import org.oliot.model.oliot.QuantityEvent;
@@ -70,6 +76,8 @@ import org.oliot.model.oliot.TransactionEvent;
 import org.oliot.model.oliot.TransformationEvent;
 import org.oliot.model.oliot.Vocabulary;
 import org.oliot.model.oliot.VocabularyElement;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Copyright (C) 2015 Yalew Kidane
@@ -116,6 +124,8 @@ public class EventToEventTypeConverter {
 			aggregationEventType.setEventTimeZoneOffset(aggregationEvent
 					.getEventTimeZoneOffset());
 		}
+		
+		
 		// Parent ID
 		if (aggregationEvent.getParentID() != null) {
 			aggregationEventType.setParentID(aggregationEvent.getParentID());
@@ -136,6 +146,71 @@ public class EventToEventTypeConverter {
 
 		}
 		
+		//Base EPCISEventExtension
+		if(aggregationEvent.getBaseExtension()!=null){
+			EPCISEventExtensionType epcisEventExtensionType=new EPCISEventExtensionType();
+			epcisEventExtensionType.setEventID(aggregationEvent.getBaseExtension().getEventID());
+			EPCISEventExtension2Type epcisEventExtension2Type=new EPCISEventExtension2Type();
+			epcisEventExtensionType.setExtension(epcisEventExtension2Type);
+			if(aggregationEvent.getBaseExtension().getErrorDeclaration()!=null){
+				ErrorDeclarationType errorDeclarationType=new ErrorDeclarationType();
+				if(aggregationEvent.getBaseExtension().getErrorDeclaration().getDeclarationTime()!=null){
+					GregorianCalendar declarationTimeGerogian=new GregorianCalendar();
+					declarationTimeGerogian.setTime(aggregationEvent.getBaseExtension().getErrorDeclaration().getDeclarationTime());
+					XMLGregorianCalendar declarationTimeXMLG=DatatypeFactory.newInstance().newXMLGregorianCalendar(declarationTimeGerogian);
+					errorDeclarationType.setDeclarationTime(declarationTimeXMLG);
+				}
+				if(aggregationEvent.getBaseExtension().getErrorDeclaration().getReason()!=null){
+					errorDeclarationType.setReason(aggregationEvent.getBaseExtension().getErrorDeclaration().getReason());
+				}
+				if(aggregationEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs()!=null){
+					
+					CorrectiveEventIDsType correctiveEventIDsType = new CorrectiveEventIDsType();
+					if(aggregationEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs().getCorrectiveEventID()!=null){
+						List<CorrectiveEventID> correctiveEventIDList=aggregationEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs().getCorrectiveEventID();
+						List<String> correctiveEventIDListStr=new ArrayList<String>();
+						for(int i=0;i<correctiveEventIDList.size();i++){
+							correctiveEventIDListStr.add(correctiveEventIDList.get(i).getCorrectiveEventID());
+						}
+						correctiveEventIDsType.setCorrectiveEventID(correctiveEventIDListStr);
+					}
+					errorDeclarationType.setCorrectiveEventIDs(correctiveEventIDsType);
+					
+				}
+				if(aggregationEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps()!=null){
+					if(aggregationEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps().getExtensionMapList()!=null){
+						List<ExtensionMap> extensionMaps=aggregationEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps()
+								.getExtensionMapList();
+						try{
+							List<Object> elementList=new ArrayList<Object>();
+							Document doc;
+							DocumentBuilderFactory dbf= DocumentBuilderFactory.newInstance();
+							DocumentBuilder builder=dbf.newDocumentBuilder();
+							doc=builder.newDocument();
+							
+							Map<Integer, ExtensionMap> map=new HashMap<Integer, ExtensionMap>();
+							
+							for(int i=0;i<extensionMaps.size();i++){
+								map.put(extensionMaps.get(i).getLeftNodeNumber(), extensionMaps.get(i));
+							}
+							WriteUtility.leftNodeNumber=1;
+							WriteUtility.rightNodeNumber=1;
+							int[] level=new int[1];
+							level[0]=0;
+							if(map.size()>1)
+								ReaderUtility.putAny(map,1,level,null,elementList,doc);
+							errorDeclarationType.setAny(elementList);
+						} catch (ParserConfigurationException e){
+							Configuration.logger.log(Level.ERROR, e.toString());
+						}	
+					}
+				}
+				
+				epcisEventExtensionType.setErrorDeclaration(errorDeclarationType);
+			}
+			aggregationEventType.setBaseExtension(epcisEventExtensionType);
+		}
+		
 		// action
 		aggregationEventType.setAction(ActionType.fromValue(aggregationEvent.getAction().name()));
 		// Business step
@@ -147,6 +222,8 @@ public class EventToEventTypeConverter {
 			aggregationEventType.setDisposition(aggregationEvent
 					.getDisposition());
 		}
+		//EPCISEventExtension
+		
 		// read point
 		if (aggregationEvent.getReadPoint() != null) {
 			ReadPointType readpoint = new ReadPointType();
@@ -205,7 +282,7 @@ public class EventToEventTypeConverter {
 				for (int i = 0; i < quantityList.size(); i++) {
 					quantityElement = new QuantityElementType();
 					quantityElement.setEpcClass(quantityList.get(i).getEpcClass());
-					quantityElement.setQuantity(quantityList.get(i).getQuantity());
+					//quantityElement.setQuantity(quantityList.get(i).getQuantity());
 					quantityElement.setUom(quantityList.get(i).getUom());
 					childQuantityListH.getQuantityElement().add(quantityElement);
 					
@@ -253,17 +330,17 @@ public class EventToEventTypeConverter {
 				 AggregationEventExtension2Type aggregationEventExtension2=new
 						 AggregationEventExtension2Type(); 
 				
-				 if(aggregationEvent.getExtension().getExtension().getMapExt() != null){
-					 List<MapExt> mapExtList=aggregationEvent.getExtension().getExtension().getMapExt();
-					 
-					 
-					 Map<QName, String> otherAttribute=new HashMap<QName, String>();
-						for(int i=0;i<mapExtList.size();i++){
-								QName name=new QName(mapExtList.get(i).getType(),"","");
-								otherAttribute.put(name,mapExtList.get(i).getValue());	
-						}
-					 aggregationEventExtension2.setOtherAttributes(otherAttribute);
-				 }
+//				 if(aggregationEvent.getExtension().getExtension().getMapExt() != null){
+//					 List<MapExt> mapExtList=aggregationEvent.getExtension().getExtension().getMapExt();
+//					 
+//					 
+//					 Map<QName, String> otherAttribute=new HashMap<QName, String>();
+////						for(int i=0;i<mapExtList.size();i++){
+////								QName name=new QName(mapExtList.get(i).getType(),"","");
+////								otherAttribute.put(name,mapExtList.get(i).getValue());	
+////						}
+//					 aggregationEventExtension2.setOtherAttributes(otherAttribute);
+//				 }
 				 
 			  aggregationEventExtensionH.setExtension(aggregationEventExtension2);
 			 }
@@ -276,7 +353,7 @@ public class EventToEventTypeConverter {
 		return null;
 	}
 
-	
+//========================================================================================================================	
 	public ObjectEventType convert(ObjectEvent objectEvent) {
 
 		try{
@@ -297,10 +374,75 @@ public class EventToEventTypeConverter {
 			XMLGregorianCalendar recordTimeXMLG=DatatypeFactory.newInstance().newXMLGregorianCalendar(recordTimeGerogy);
 			objectEventType.setRecordTime(recordTimeXMLG);
 		}
-		// Aggregation Time offset
+		// ObjectEvent Time offset
 		if (objectEvent.getEventTimeZoneOffset() != null) {
 			objectEventType.setEventTimeZoneOffset(objectEvent
 					.getEventTimeZoneOffset());
+		}
+		
+		//Base EPCISEventExtension
+		if(objectEvent.getBaseExtension()!=null){
+			EPCISEventExtensionType epcisEventExtensionType=new EPCISEventExtensionType();
+			epcisEventExtensionType.setEventID(objectEvent.getBaseExtension().getEventID());
+			EPCISEventExtension2Type epcisEventExtension2Type=new EPCISEventExtension2Type();
+			epcisEventExtensionType.setExtension(epcisEventExtension2Type);
+			if(objectEvent.getBaseExtension().getErrorDeclaration()!=null){
+				ErrorDeclarationType errorDeclarationType=new ErrorDeclarationType();
+				if(objectEvent.getBaseExtension().getErrorDeclaration().getDeclarationTime()!=null){
+					GregorianCalendar declarationTimeGerogian=new GregorianCalendar();
+					declarationTimeGerogian.setTime(objectEvent.getBaseExtension().getErrorDeclaration().getDeclarationTime());
+					XMLGregorianCalendar declarationTimeXMLG=DatatypeFactory.newInstance().newXMLGregorianCalendar(declarationTimeGerogian);
+					errorDeclarationType.setDeclarationTime(declarationTimeXMLG);
+				}
+				if(objectEvent.getBaseExtension().getErrorDeclaration().getReason()!=null){
+					errorDeclarationType.setReason(objectEvent.getBaseExtension().getErrorDeclaration().getReason());
+				}
+				if(objectEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs()!=null){
+					
+					CorrectiveEventIDsType correctiveEventIDsType = new CorrectiveEventIDsType();
+					if(objectEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs().getCorrectiveEventID()!=null){
+						List<CorrectiveEventID> correctiveEventIDList=objectEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs().getCorrectiveEventID();
+						List<String> correctiveEventIDListStr=new ArrayList<String>();
+						for(int i=0;i<correctiveEventIDList.size();i++){
+							correctiveEventIDListStr.add(correctiveEventIDList.get(i).getCorrectiveEventID());
+						}
+						correctiveEventIDsType.setCorrectiveEventID(correctiveEventIDListStr);
+					}
+					errorDeclarationType.setCorrectiveEventIDs(correctiveEventIDsType);
+					
+				}
+				if(objectEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps()!=null){
+					if(objectEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps().getExtensionMapList()!=null){
+						List<ExtensionMap> extensionMaps=objectEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps()
+								.getExtensionMapList();
+						try{
+							List<Object> elementList=new ArrayList<Object>();
+							Document doc;
+							DocumentBuilderFactory dbf= DocumentBuilderFactory.newInstance();
+							DocumentBuilder builder=dbf.newDocumentBuilder();
+							doc=builder.newDocument();
+							
+							Map<Integer, ExtensionMap> map=new HashMap<Integer, ExtensionMap>();
+							
+							for(int i=0;i<extensionMaps.size();i++){
+								map.put(extensionMaps.get(i).getLeftNodeNumber(), extensionMaps.get(i));
+							}
+							WriteUtility.leftNodeNumber=1;
+							WriteUtility.rightNodeNumber=1;
+							int[] level=new int[1];
+							level[0]=0;
+							if(map.size()>1)
+								ReaderUtility.putAny(map,1,level,null,elementList,doc);
+							errorDeclarationType.setAny(elementList);
+						} catch (ParserConfigurationException e){
+							Configuration.logger.log(Level.ERROR, e.toString());
+						}	
+					}
+				}
+				
+				epcisEventExtensionType.setErrorDeclaration(errorDeclarationType);
+			}
+			objectEventType.setBaseExtension(epcisEventExtensionType);
 		}
 
 		// action
@@ -324,7 +466,7 @@ public class EventToEventTypeConverter {
 			  }
 			  objectEventType.setReadPoint(readpointH);
 		}
-
+		
 		// business transaction
 		if (objectEvent.getBizTransactionList() != null) {
 			List<BusinessTransaction> bizTransaction = objectEvent
@@ -357,23 +499,23 @@ public class EventToEventTypeConverter {
 		
 		if (objectEvent.getIlmd() != null) {
 			ILMDType iLMD = new ILMDType();
-			if(objectEvent.getIlmd().getMapExt() != null){
-				 List<MapExt> mapExtList=objectEvent.getIlmd().getMapExt();
-				 			 
-				 Map<QName, String> otherAttribute=new HashMap<QName, String>();
-					for(int i=0;i<mapExtList.size();i++){
-							QName name=new QName(mapExtList.get(i).getType(),"","");
-							otherAttribute.put(name,mapExtList.get(i).getValue());	
-					}
-					
-					iLMD.setOtherAttributes(otherAttribute);
-			 }
+//			if(objectEvent.getIlmd().getMapExt() != null){
+//				 List<MapExt> mapExtList=objectEvent.getIlmd().getMapExt();
+//				 			 
+//				 Map<QName, String> otherAttribute=new HashMap<QName, String>();
+////					for(int i=0;i<mapExtList.size();i++){
+////							QName name=new QName(mapExtList.get(i).getType(),"","");
+////							otherAttribute.put(name,mapExtList.get(i).getValue());	
+////					}
+//					
+//					iLMD.setOtherAttributes(otherAttribute);
+//			 }
 			if (objectEvent.getIlmd().getExtension() != null) {
 				ILMDExtensionType iLMDExtension = new ILMDExtensionType();
 				iLMD.setExtension(iLMDExtension);
 
 			}
-			objectEventType.setIlmd(iLMD);
+			//objectEventType.setIlmd(iLMD); // *********************************
 		}
 
 		
@@ -388,7 +530,7 @@ public class EventToEventTypeConverter {
 				for (int i = 0; i < quantityList.size(); i++) {
 					QuantityElementType quantityElement = new QuantityElementType();
 					quantityElement.setEpcClass(quantityList.get(i).getEpcClass());
-					quantityElement.setQuantity(quantityList.get(i).getQuantity());
+				//	quantityElement.setQuantity(quantityList.get(i).getQuantity()); // *********************************
 					quantityElement.setUom(quantityList.get(i).getUom());
 					childQuantityListH.getQuantityElement().add(quantityElement);
 				}
@@ -429,23 +571,94 @@ public class EventToEventTypeConverter {
 			if (objectEvent.getExtension().getIlmd() != null) {
 				ILMDType iLMD = new ILMDType();
 				
-				if (objectEvent.getIlmd().getExtension() != null) {
-					ILMDExtensionType iLMDExtension = new ILMDExtensionType();
-					iLMD.setExtension(iLMDExtension);
+				//if (objectEvent.getIlmd().getExtension() != null) {
+					//ILMDExtensionType iLMDExtension = new ILMDExtensionType();
+					//iLMD.setExtension(iLMDExtension); // *********************************
 
+				//}
+				//objectEventType.setIlmd(iLMD); // *********************************
+				if(objectEvent.getExtension().getIlmd().getExtensionMaps()!=null){
+					if(objectEvent.getExtension().getIlmd().getExtensionMaps().getExtensionMapList()!=null){
+						List<ExtensionMap> extensionMaps=objectEvent.getExtension()
+								.getIlmd().getExtensionMaps().getExtensionMapList();
+						try{
+							List<Object> elementList=new ArrayList<Object>();
+							Document doc;
+							DocumentBuilderFactory dbf= DocumentBuilderFactory.newInstance();
+							DocumentBuilder builder=dbf.newDocumentBuilder();
+							doc=builder.newDocument();
+							
+							Map<Integer, ExtensionMap> map=new HashMap<Integer, ExtensionMap>();
+							
+							for(int i=0;i<extensionMaps.size();i++){
+								map.put(extensionMaps.get(i).getLeftNodeNumber(), extensionMaps.get(i));
+							}
+							WriteUtility.leftNodeNumber=1;
+							WriteUtility.rightNodeNumber=1;
+							int[] level=new int[1];
+							level[0]=0;
+							if(map.size()>1)
+								ReaderUtility.putAny(map,1,level,null,elementList,doc);
+							iLMD.setAny(elementList);
+						} catch (ParserConfigurationException e){
+							Configuration.logger.log(Level.ERROR, e.toString());
+						}	
+					}
+					
 				}
-				objectEventType.setIlmd(iLMD);
+//				List<ExtensionMap> extensionMaps=objectEvent.getExtensionMaps().getExtensionMapList();
+//				try{
+//					String namespaceURI="http://namespaceURI";
+//					String localName="localName";
+//					String prefix="prefix";
+//					String value="value";
+//					
+//					List<Object> elementList=new ArrayList<Object>();
+//					
+//					Document doc;
+//					DocumentBuilderFactory dbf= DocumentBuilderFactory.newInstance();
+//					DocumentBuilder builder=dbf.newDocumentBuilder();
+//					doc=builder.newDocument();
+//					
+//					
+//					String qName=prefix+":"+localName;
+//					Element element=doc.createElement(qName);
+//					
+//					if(prefix !=null && namespaceURI != null){
+//						element.setAttribute("xmlns:"+prefix, namespaceURI);
+//					}
+//					if(value != null){
+//						element.setTextContent(value);
+//					//	elementList.add(element);
+//					}
+//					
+//					Map<Integer, ExtensionMap> map=new HashMap<Integer, ExtensionMap>();
+//					
+//					for(int i=0;i<extensionMaps.size();i++){
+//						map.put(extensionMaps.get(i).getLeftNodeNumber(), extensionMaps.get(i));
+//					}
+//					Configuration.logger.info("-----------------------------");
+//					WriteUtility.leftNodeNumber=1;
+//					WriteUtility.rightNodeNumber=1;
+//					int[] level=new int[1];
+//					level[0]=0;
+//					ReaderUtility.putAny(map,1,level,null,elementList,doc);
+//					objectEventType.setAny(elementList);
+//				} catch (ParserConfigurationException e){
+//					Configuration.logger.log(Level.ERROR, e.toString());
+//				}
+				objectEventExtensionH.setIlmd(iLMD);
 			}
 
 			//objectEventExtensionH.setObjectEvent(objectEvent);
 			
 			
-			  if(objectEvent.getExtension().getExtension() != null){
+			  if(objectEvent.getExtension().getExtension2() != null){
 				  ObjectEventExtension2Type objectEventExtension2= 
 						  new  ObjectEventExtension2Type();
 				  
-					 if(objectEvent.getExtension().getExtension().getAny()!=null){
-						 List<String> any=objectEvent.getExtension().getExtension().getAny();
+					 if(objectEvent.getExtension().getExtension2().getAny()!=null){
+						 List<String> any=objectEvent.getExtension().getExtension2().getAny();
 						 List<Object> anyOut=new ArrayList<Object>();
 						 for(int i=0;i<any.size();i++){
 								anyOut.add(any.get(i));							
@@ -453,17 +666,17 @@ public class EventToEventTypeConverter {
 							
 						 objectEventExtension2.setAny(anyOut);	
 					 }
-					 if(objectEvent.getExtension().getExtension().getMapExt() != null){
-						 List<MapExt> mapExtList=objectEvent.getExtension().getExtension().getMapExt();
-						 
-						 
-						 Map<QName, String> otherAttribute=new HashMap<QName, String>();
-							for(int i=0;i<mapExtList.size();i++){
-									QName name=new QName(mapExtList.get(i).getType(),"","");
-									otherAttribute.put(name,mapExtList.get(i).getValue());	
-							}
-							objectEventExtension2.setOtherAttributes(otherAttribute);
-					 }
+//					 if(objectEvent.getExtension().getExtension().getMapExt() != null){
+//						 List<MapExt> mapExtList=objectEvent.getExtension().getExtension().getMapExt();
+//						 
+//						 
+//						 Map<QName, String> otherAttribute=new HashMap<QName, String>();
+//							for(int i=0;i<mapExtList.size();i++){
+//									QName name=new QName(mapExtList.get(i).getType(),"","");
+//									otherAttribute.put(name,mapExtList.get(i).getValue());	
+//							}
+//							objectEventExtension2.setOtherAttributes(otherAttribute);
+//					 }
 				  objectEventExtensionH.setExtension(objectEventExtension2);
 			  
 			  }
@@ -485,12 +698,67 @@ public class EventToEventTypeConverter {
 			objectEventType.setEpcList(objectEventEPCs);
 
 		}
+		//any object
+		if(objectEvent.getExtensionMaps() != null){
+			if(objectEvent.getExtensionMaps().getExtensionMapList()!=null){
+				List<ExtensionMap> extensionMaps=objectEvent.getExtensionMaps().getExtensionMapList();
+				
+				try{
+					String namespaceURI="http://namespaceURI";
+					String localName="localName";
+					String prefix="prefix";
+					String value="value";
+					
+					List<Object> elementList=new ArrayList<Object>();
+					
+					Document doc;
+					DocumentBuilderFactory dbf= DocumentBuilderFactory.newInstance();
+					DocumentBuilder builder=dbf.newDocumentBuilder();
+					doc=builder.newDocument();
+					
+					
+					String qName=prefix+":"+localName;
+					Element element=doc.createElement(qName);
+					
+					if(prefix !=null && namespaceURI != null){
+						element.setAttribute("xmlns:"+prefix, namespaceURI);
+					}
+					if(value != null){
+						element.setTextContent(value);
+					//	elementList.add(element);
+					}
+					
+					Map<Integer, ExtensionMap> map=new HashMap<Integer, ExtensionMap>();
+					
+					for(int i=0;i<extensionMaps.size();i++){
+						map.put(extensionMaps.get(i).getLeftNodeNumber(), extensionMaps.get(i));
+					}
+				//	Configuration.logger.info("-----------------------------");
+					WriteUtility.leftNodeNumber=1;
+					WriteUtility.rightNodeNumber=1;
+					int[] level=new int[1];
+					level[0]=0;
+					if(map.size()>1)
+						ReaderUtility.putAny(map,1,level,null,elementList,doc);
+					objectEventType.setAny(elementList);
+				} catch (ParserConfigurationException e){
+					Configuration.logger.log(Level.ERROR, e.toString());
+				}
+				
+			}
+			
+		}
+		
 		return objectEventType;
 		} catch (DatatypeConfigurationException e) {
 			Configuration.logger.log(Level.ERROR, e.toString());
 		}
 		return null;
 	}
+	
+	
+	
+//=====================================================================================================================
 
 	public QuantityEventType convert(QuantityEvent quantityEvent) {
 		
@@ -519,6 +787,70 @@ public class EventToEventTypeConverter {
 			quantityEventType.setEventTimeZoneOffset(quantityEvent
 					.getEventTimeZoneOffset());
 		}
+		
+		//EPCISEventExtension
+		if(quantityEvent.getBaseExtension()!=null){
+			EPCISEventExtensionType epcisEventExtensionType=new EPCISEventExtensionType();
+			epcisEventExtensionType.setEventID(quantityEvent.getBaseExtension().getEventID());
+			EPCISEventExtension2Type epcisEventExtension2Type=new EPCISEventExtension2Type();
+			epcisEventExtensionType.setExtension(epcisEventExtension2Type);
+			if(quantityEvent.getBaseExtension().getErrorDeclaration()!=null){
+				ErrorDeclarationType errorDeclarationType=new ErrorDeclarationType();
+				if(quantityEvent.getBaseExtension().getErrorDeclaration().getDeclarationTime()!=null){
+					GregorianCalendar declarationTimeGerogian=new GregorianCalendar();
+					declarationTimeGerogian.setTime(quantityEvent.getBaseExtension().getErrorDeclaration().getDeclarationTime());
+					XMLGregorianCalendar declarationTimeXMLG=DatatypeFactory.newInstance().newXMLGregorianCalendar(declarationTimeGerogian);
+					errorDeclarationType.setDeclarationTime(declarationTimeXMLG);
+				}
+				if(quantityEvent.getBaseExtension().getErrorDeclaration().getReason()!=null){
+					errorDeclarationType.setReason(quantityEvent.getBaseExtension().getErrorDeclaration().getReason());
+				}
+				if(quantityEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs()!=null){
+					
+					CorrectiveEventIDsType correctiveEventIDsType = new CorrectiveEventIDsType();
+					if(quantityEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs().getCorrectiveEventID()!=null){
+						List<CorrectiveEventID> correctiveEventIDList=quantityEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs().getCorrectiveEventID();
+						List<String> correctiveEventIDListStr=new ArrayList<String>();
+						for(int i=0;i<correctiveEventIDList.size();i++){
+							correctiveEventIDListStr.add(correctiveEventIDList.get(i).getCorrectiveEventID());
+						}
+						correctiveEventIDsType.setCorrectiveEventID(correctiveEventIDListStr);
+					}
+					errorDeclarationType.setCorrectiveEventIDs(correctiveEventIDsType);
+				}				
+				if(quantityEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps()!=null){
+					if(quantityEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps().getExtensionMapList()!=null){
+						List<ExtensionMap> extensionMaps=quantityEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps()
+								.getExtensionMapList();
+						try{
+							List<Object> elementList=new ArrayList<Object>();
+							Document doc;
+							DocumentBuilderFactory dbf= DocumentBuilderFactory.newInstance();
+							DocumentBuilder builder=dbf.newDocumentBuilder();
+							doc=builder.newDocument();
+							
+							Map<Integer, ExtensionMap> map=new HashMap<Integer, ExtensionMap>();
+							
+							for(int i=0;i<extensionMaps.size();i++){
+								map.put(extensionMaps.get(i).getLeftNodeNumber(), extensionMaps.get(i));
+							}
+							WriteUtility.leftNodeNumber=1;
+							WriteUtility.rightNodeNumber=1;
+							int[] level=new int[1];
+							level[0]=0;
+							if(map.size()>1)
+								ReaderUtility.putAny(map,1,level,null,elementList,doc);
+							errorDeclarationType.setAny(elementList);
+						} catch (ParserConfigurationException e){
+							Configuration.logger.log(Level.ERROR, e.toString());
+						}	
+					}
+				}
+				epcisEventExtensionType.setErrorDeclaration(errorDeclarationType);
+			}
+			quantityEventType.setBaseExtension(epcisEventExtensionType);
+		}
+		
 		// epc class
 		if (quantityEvent.getEpcClass() != null) {
 			quantityEventType.setEpcClass(quantityEvent.getEpcClass());
@@ -590,6 +922,7 @@ public class EventToEventTypeConverter {
 
 	}
 	
+//==================================================================================================================
 	
 	public TransactionEventType convert(TransactionEvent transactionEvent) {
 		
@@ -617,6 +950,68 @@ public class EventToEventTypeConverter {
 		if (transactionEvent.getEventTimeZoneOffset() != null) {
 			transactionEventType.setEventTimeZoneOffset(transactionEvent
 					.getEventTimeZoneOffset());
+		}
+		
+		//EPCISEventExtension
+		if(transactionEvent.getBaseExtension()!=null){
+			EPCISEventExtensionType epcisEventExtensionType=new EPCISEventExtensionType();
+			epcisEventExtensionType.setEventID(transactionEvent.getBaseExtension().getEventID());
+			EPCISEventExtension2Type epcisEventExtension2Type=new EPCISEventExtension2Type();
+			epcisEventExtensionType.setExtension(epcisEventExtension2Type);
+			if(transactionEvent.getBaseExtension().getErrorDeclaration()!=null){
+				ErrorDeclarationType errorDeclarationType=new ErrorDeclarationType();
+				if(transactionEvent.getBaseExtension().getErrorDeclaration().getDeclarationTime()!=null){
+					GregorianCalendar declarationTimeGerogian=new GregorianCalendar();
+					declarationTimeGerogian.setTime(transactionEvent.getBaseExtension().getErrorDeclaration().getDeclarationTime());
+					XMLGregorianCalendar declarationTimeXMLG=DatatypeFactory.newInstance().newXMLGregorianCalendar(declarationTimeGerogian);
+					errorDeclarationType.setDeclarationTime(declarationTimeXMLG);
+				}
+				if(transactionEvent.getBaseExtension().getErrorDeclaration().getReason()!=null){
+					errorDeclarationType.setReason(transactionEvent.getBaseExtension().getErrorDeclaration().getReason());
+				}
+				if(transactionEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs()!=null){
+					CorrectiveEventIDsType correctiveEventIDsType = new CorrectiveEventIDsType();
+					if(transactionEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs().getCorrectiveEventID()!=null){
+						List<CorrectiveEventID> correctiveEventIDList=transactionEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs().getCorrectiveEventID();
+						List<String> correctiveEventIDListStr=new ArrayList<String>();
+						for(int i=0;i<correctiveEventIDList.size();i++){
+							correctiveEventIDListStr.add(correctiveEventIDList.get(i).getCorrectiveEventID());
+						}
+						correctiveEventIDsType.setCorrectiveEventID(correctiveEventIDListStr);
+					}
+					errorDeclarationType.setCorrectiveEventIDs(correctiveEventIDsType);
+				}	
+				if(transactionEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps()!=null){
+					if(transactionEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps().getExtensionMapList()!=null){
+						List<ExtensionMap> extensionMaps=transactionEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps()
+								.getExtensionMapList();
+						try{
+							List<Object> elementList=new ArrayList<Object>();
+							Document doc;
+							DocumentBuilderFactory dbf= DocumentBuilderFactory.newInstance();
+							DocumentBuilder builder=dbf.newDocumentBuilder();
+							doc=builder.newDocument();
+							
+							Map<Integer, ExtensionMap> map=new HashMap<Integer, ExtensionMap>();
+							
+							for(int i=0;i<extensionMaps.size();i++){
+								map.put(extensionMaps.get(i).getLeftNodeNumber(), extensionMaps.get(i));
+							}
+							WriteUtility.leftNodeNumber=1;
+							WriteUtility.rightNodeNumber=1;
+							int[] level=new int[1];
+							level[0]=0;
+							if(map.size()>1)
+								ReaderUtility.putAny(map,1,level,null,elementList,doc);
+							errorDeclarationType.setAny(elementList);
+						} catch (ParserConfigurationException e){
+							Configuration.logger.log(Level.ERROR, e.toString());
+						}	
+					}
+				}
+				epcisEventExtensionType.setErrorDeclaration(errorDeclarationType);
+			}
+			transactionEventType.setBaseExtension(epcisEventExtensionType);
 		}
 
 		// Parent ID
@@ -690,11 +1085,11 @@ public class EventToEventTypeConverter {
 				List<QuantityElement> quantityList = transactionEvent.getExtension().getQuantityList().getQuantityElement();
 				QuantityListType	childQuantityListH = new QuantityListType();
 				for (int i = 0; i < quantityList.size(); i++) {
-					QuantityElementType quantityElement = new QuantityElementType();
-					quantityElement.setEpcClass(quantityList.get(i).getEpcClass());
-					quantityElement.setQuantity(quantityList.get(i).getQuantity());
-					quantityElement.setUom(quantityList.get(i).getUom());
-					childQuantityListH.getQuantityElement().add(quantityElement);
+//					QuantityElementType quantityElement = new QuantityElementType();
+//					quantityElement.setEpcClass(quantityList.get(i).getEpcClass());
+//					quantityElement.setQuantity(quantityList.get(i).getQuantity());
+//					quantityElement.setUom(quantityList.get(i).getUom());
+//					childQuantityListH.getQuantityElement().add(quantityElement); // *********************************
 				}
 				transactionEventExtensionH.setQuantityList(childQuantityListH);
 			}
@@ -743,17 +1138,17 @@ public class EventToEventTypeConverter {
 						
 					 transactionEventExtension2.setAny(anyOut);	
 				 }
-				 if(transactionEvent.getExtension().getExtension().getMapExt() != null){
-					 List<MapExt> mapExtList=transactionEvent.getExtension().getExtension().getMapExt();
-					 
-					 
-					 Map<QName, String> otherAttribute=new HashMap<QName, String>();
-						for(int i=0;i<mapExtList.size();i++){
-								QName name=new QName(mapExtList.get(i).getType(),"","");
-								otherAttribute.put(name,mapExtList.get(i).getValue());	
-						}
-						transactionEventExtension2.setOtherAttributes(otherAttribute);
-				 }
+//				 if(transactionEvent.getExtension().getExtension().getMapExt() != null){
+//					 List<MapExt> mapExtList=transactionEvent.getExtension().getExtension().getMapExt();
+//					 
+//					 
+//					 Map<QName, String> otherAttribute=new HashMap<QName, String>();
+////						for(int i=0;i<mapExtList.size();i++){
+////								QName name=new QName(mapExtList.get(i).getType(),"","");
+////								otherAttribute.put(name,mapExtList.get(i).getValue());	
+////						}
+//						transactionEventExtension2.setOtherAttributes(otherAttribute);
+//				 }
 				
 				transactionEventExtensionH.setExtension(transactionEventExtension2);
 
@@ -785,7 +1180,8 @@ public class EventToEventTypeConverter {
 
 	}
 
-
+//==========================================================================================================================
+	
 	public TransformationEventType convert(TransformationEvent transformationEvent) {
 
 		try{
@@ -812,6 +1208,69 @@ public class EventToEventTypeConverter {
 					.getEventTimeZoneOffset());
 		}
 
+		//EPCISEventExtension
+		if(transformationEvent.getBaseExtension()!=null){
+			EPCISEventExtensionType epcisEventExtensionType=new EPCISEventExtensionType();
+			epcisEventExtensionType.setEventID(transformationEvent.getBaseExtension().getEventID());
+			EPCISEventExtension2Type epcisEventExtension2Type=new EPCISEventExtension2Type();
+			epcisEventExtensionType.setExtension(epcisEventExtension2Type);
+			if(transformationEvent.getBaseExtension().getErrorDeclaration()!=null){
+				ErrorDeclarationType errorDeclarationType=new ErrorDeclarationType();
+				if(transformationEvent.getBaseExtension().getErrorDeclaration().getDeclarationTime()!=null){
+					GregorianCalendar declarationTimeGerogian=new GregorianCalendar();
+					declarationTimeGerogian.setTime(transformationEvent.getBaseExtension().getErrorDeclaration().getDeclarationTime());
+					XMLGregorianCalendar declarationTimeXMLG=DatatypeFactory.newInstance().newXMLGregorianCalendar(declarationTimeGerogian);
+					errorDeclarationType.setDeclarationTime(declarationTimeXMLG);
+				}
+				if(transformationEvent.getBaseExtension().getErrorDeclaration().getReason()!=null){
+					errorDeclarationType.setReason(transformationEvent.getBaseExtension().getErrorDeclaration().getReason());
+				}
+				if(transformationEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs()!=null){
+					
+					CorrectiveEventIDsType correctiveEventIDsType = new CorrectiveEventIDsType();
+					if(transformationEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs().getCorrectiveEventID()!=null){
+						List<CorrectiveEventID> correctiveEventIDList=transformationEvent.getBaseExtension().getErrorDeclaration().getCorrectiveEventIDs().getCorrectiveEventID();
+						List<String> correctiveEventIDListStr=new ArrayList<String>();
+						for(int i=0;i<correctiveEventIDList.size();i++){
+							correctiveEventIDListStr.add(correctiveEventIDList.get(i).getCorrectiveEventID());
+						}
+						correctiveEventIDsType.setCorrectiveEventID(correctiveEventIDListStr);
+					}
+					errorDeclarationType.setCorrectiveEventIDs(correctiveEventIDsType);
+				}			
+				if(transformationEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps()!=null){
+					if(transformationEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps().getExtensionMapList()!=null){
+						List<ExtensionMap> extensionMaps=transformationEvent.getBaseExtension().getErrorDeclaration().getExtensionMaps()
+								.getExtensionMapList();
+						try{
+							List<Object> elementList=new ArrayList<Object>();
+							Document doc;
+							DocumentBuilderFactory dbf= DocumentBuilderFactory.newInstance();
+							DocumentBuilder builder=dbf.newDocumentBuilder();
+							doc=builder.newDocument();
+							
+							Map<Integer, ExtensionMap> map=new HashMap<Integer, ExtensionMap>();
+							
+							for(int i=0;i<extensionMaps.size();i++){
+								map.put(extensionMaps.get(i).getLeftNodeNumber(), extensionMaps.get(i));
+							}
+							WriteUtility.leftNodeNumber=1;
+							WriteUtility.rightNodeNumber=1;
+							int[] level=new int[1];
+							level[0]=0;
+							if(map.size()>1)
+								ReaderUtility.putAny(map,1,level,null,elementList,doc);
+							errorDeclarationType.setAny(elementList);
+						} catch (ParserConfigurationException e){
+							Configuration.logger.log(Level.ERROR, e.toString());
+						}	
+					}
+				}
+				epcisEventExtensionType.setErrorDeclaration(errorDeclarationType);
+			}
+			transformationEventType.setBaseExtension(epcisEventExtensionType);
+		}
+		
 		// Input EPC List
 		if (transformationEvent.getInputEPCList() != null) {
 			EPCListType inputEPCList=new EPCListType();
@@ -850,7 +1309,7 @@ public class EventToEventTypeConverter {
 			for (int i = 0; i < quantityListInput.size(); i++) {
 				quantityElementInput = new QuantityElementType();
 				quantityElementInput.setEpcClass(quantityListInput.get(i).getEpcClass());
-				quantityElementInput.setQuantity(quantityListInput.get(i).getQuantity());
+				//quantityElementInput.setQuantity(quantityListInput.get(i).getQuantity()); // *********************************
 				quantityElementInput.setUom(quantityListInput.get(i).getUom());
 				inputQuantityList.getQuantityElement().add(quantityElementInput);
 			}
@@ -867,7 +1326,7 @@ public class EventToEventTypeConverter {
 			for (int i = 0; i < quantityListOutput.size(); i++) {
 				quantityElementOutput = new QuantityElementType();
 				quantityElementOutput.setEpcClass(quantityListOutput.get(i).getEpcClass());
-				quantityElementOutput.setQuantity(quantityListOutput.get(i).getQuantity());
+				//quantityElementOutput.setQuantity(quantityListOutput.get(i).getQuantity()); // *********************************
 				quantityElementOutput.setUom(quantityListOutput.get(i).getUom());
 				outputQuantityList.getQuantityElement().add(quantityElementOutput);
 			}
@@ -958,17 +1417,17 @@ public class EventToEventTypeConverter {
 		// ilmd
 		if (transformationEvent.getIlmd() != null) {
 			ILMDType iLMD = new ILMDType();
-			if(transformationEvent.getIlmd().getMapExt() != null){
-				 List<MapExt> mapExtList=transformationEvent.getIlmd().getMapExt();
-				 			 
-				 Map<QName, String> otherAttribute=new HashMap<QName, String>();
-					for(int i=0;i<mapExtList.size();i++){
-							QName name=new QName(mapExtList.get(i).getType(),"","");
-							otherAttribute.put(name,mapExtList.get(i).getValue());	
-					}
-					
-					iLMD.setOtherAttributes(otherAttribute);
-			 }
+//			if(transformationEvent.getIlmd().getMapExt() != null){
+//				 List<MapExt> mapExtList=transformationEvent.getIlmd().getMapExt();
+//				 			 
+//				 Map<QName, String> otherAttribute=new HashMap<QName, String>();
+////					for(int i=0;i<mapExtList.size();i++){
+////							QName name=new QName(mapExtList.get(i).getType(),"","");
+////							otherAttribute.put(name,mapExtList.get(i).getValue());	
+////					}
+//					
+//					iLMD.setOtherAttributes(otherAttribute);
+//			 }
 			if (transformationEvent.getIlmd().getExtension() != null) {
 				ILMDExtensionType iLMDExtension = new ILMDExtensionType();
 				iLMD.setExtension(iLMDExtension);
@@ -992,16 +1451,16 @@ public class EventToEventTypeConverter {
 					
 				 transformationEventExtension.setAny(anyOut);	
 			 }
-			 if(transformationEvent.getExtension().getMapExt() != null){
-				 List<MapExt> mapExtList=transformationEvent.getExtension().getMapExt();
-				 			 
-				 Map<QName, String> otherAttribute=new HashMap<QName, String>();
-					for(int i=0;i<mapExtList.size();i++){
-							QName name=new QName(mapExtList.get(i).getType(),"","");
-							otherAttribute.put(name,mapExtList.get(i).getValue());	
-					}
-					transformationEventExtension.setOtherAttributes(otherAttribute);
-			 }
+//			 if(transformationEvent.getExtension().getMapExt() != null){
+//				 List<MapExt> mapExtList=transformationEvent.getExtension().getMapExt();
+//				 			 
+//				 Map<QName, String> otherAttribute=new HashMap<QName, String>();
+////					for(int i=0;i<mapExtList.size();i++){
+////							QName name=new QName(mapExtList.get(i).getType(),"","");
+////							otherAttribute.put(name,mapExtList.get(i).getValue());	
+////					}
+//					transformationEventExtension.setOtherAttributes(otherAttribute);
+//			 }
 			transformationEventType.setExtension(transformationEventExtension);
 		}
 
@@ -1012,136 +1471,7 @@ public class EventToEventTypeConverter {
 		return null;
 	}
 
-	public SensorEventType convert(SensorEvent sensorEvent) {
-
-
-		try{
-		SensorEventType sensorEventType = new SensorEventType();
-
-
-		// Event Time
-		if (sensorEvent.getEventTime() != null) {
-			GregorianCalendar eventTimeGerogy=new GregorianCalendar();
-			eventTimeGerogy.setTime(sensorEvent.getEventTime());
-			XMLGregorianCalendar eventTimeXMLG=DatatypeFactory.newInstance().newXMLGregorianCalendar(eventTimeGerogy);
-			sensorEventType.setEventTime(eventTimeXMLG);
-		}
-
-		// Record Time
-		if (sensorEvent.getRecordTime()!=null){
-			GregorianCalendar recordTimeGerogy=new GregorianCalendar();
-			recordTimeGerogy.setTime(sensorEvent.getRecordTime());
-			XMLGregorianCalendar recordTimeXMLG=DatatypeFactory.newInstance().newXMLGregorianCalendar(recordTimeGerogy);
-			sensorEventType.setRecordTime(recordTimeXMLG);
-		}
-		// SensorEventType Time offset
-		if (sensorEventType.getEventTimeZoneOffset() != null) {
-			sensorEvent.setEventTimeZoneOffset(sensorEventType
-					.getEventTimeZoneOffset());
-		}
-
-		// Event Time
-		if (sensorEvent.getFinishTime() != null) {
-			GregorianCalendar finishTimeGerogy=new GregorianCalendar();
-			finishTimeGerogy.setTime(sensorEvent.getFinishTime());
-			XMLGregorianCalendar finishTimeXMLG=DatatypeFactory.newInstance().newXMLGregorianCalendar(finishTimeGerogy);
-			sensorEventType.setFinishTime(finishTimeXMLG);
-		}
-
-		// action
-		sensorEvent.setAction(Action.fromValue(sensorEventType.getAction()
-				.name()));
-		// Business step
-		if (sensorEvent.getBizStep() != null) {
-			sensorEventType.setBizStep(sensorEvent.getBizStep());
-		}
-		// Disposition
-		if (sensorEvent.getDisposition() != null) {
-			sensorEventType.setDisposition(sensorEvent.getDisposition());
-		}
-
-		// read point
-		if (sensorEvent.getReadPoint() != null) {
-			ReadPointType readpointH = new ReadPointType();
-			readpointH.setId(sensorEvent.getReadPoint().getsId());
-			  if(sensorEvent.getReadPoint().getExtension() !=null){
-			  ReadPointExtensionType readPointExtensionH=new ReadPointExtensionType();
-				readpointH.setExtension(readPointExtensionH);; 
-			  
-			  }
-			  sensorEventType.setReadPoint(readpointH);
-		}
-
-		// business transaction
-		if (sensorEvent.getBizTransactionList() != null) {
-			List<BusinessTransaction> bizTransaction = sensorEvent
-					.getBizTransactionList().getBizTransaction();
-			BusinessTransactionListType businessTransactionList = new BusinessTransactionListType();
-			BusinessTransactionType businessTransaction;
-			
-			for (int i = 0; i < bizTransaction.size(); i++) {
-				businessTransaction = new BusinessTransactionType();
-				businessTransaction.setType(bizTransaction.get(i).getType());
-				businessTransaction.setValue(bizTransaction.get(i).getValue());
-				businessTransactionList.getBizTransaction().add(
-						businessTransaction);
-				}
-			sensorEventType.setBizTransactionList(businessTransactionList);
-		}
-
-		// Business location
-		if (sensorEvent.getBizLocation() != null) {
-			BusinessLocationType businessLocationH = new BusinessLocationType();
-			businessLocationH.setId(sensorEvent.getBizLocation().getsId());
-			if(sensorEvent.getBizLocation().getExtension() !=null){
-				  BusinessLocationExtensionType businessLocationExtensionH=
-						  new  BusinessLocationExtensionType();
-			      businessLocationH.setExtension(businessLocationExtensionH);
-			  }
-			sensorEventType.setBizLocation(businessLocationH);
-		}
-
-		// Target Object
-		if (sensorEvent.getTargetObject() != null) {
-			sensorEventType.setTargetObject(sensorEvent.getTargetObject());
-		}
-		// Target Area
-		if (sensorEvent.getTargetArea() != null) {
-			sensorEventType.setTargetArea(sensorEvent.getTargetArea());
-		}
-
-		// Sensing List
-		if (sensorEvent.getSensingList() != null) {
-			List<SensingElement> sensingListType = sensorEvent
-					.getSensingList().getSensingElement();
-			SensingListType sensingList = new SensingListType();
-			SensingElementType sensingElement;
-			for (int i = 0; i < sensingListType.size(); i++) {
-				sensingElement = new SensingElementType();
-				sensingElement.setType(sensingListType.get(i).getType());
-				sensingElement.setValue(sensingListType.get(i).getValue());
-				sensingElement.setUom(sensingListType.get(i).getUom());
-				EPC sensorEPCN = new EPC();
-				sensorEPCN.setValue(sensingListType.get(i).getEpc().getValue());
-				sensingElement.setEpc(sensorEPCN);
-				sensingList.getSensingElement().add(sensingElement);
-				
-			}
-			sensorEventType.setSensingList(sensingList);
-		}
-
-		if (sensorEvent.getExtension() != null) {
-			SensorEventExtensionType sensorEventExtension = new SensorEventExtensionType();
-			sensorEventType.setExtension(sensorEventExtension);
-		}
-
-	
-		return sensorEventType;
-		} catch (DatatypeConfigurationException e) {
-			Configuration.logger.log(Level.ERROR, e.toString());
-		}
-		return null;
-	}
+//====================================================================================================================	
 
 	public VocabularyType convert(Vocabulary vocabulary) {
 	
@@ -1164,7 +1494,7 @@ public class EventToEventTypeConverter {
 					for (int j = 0; j < attributeList.size(); j++) {
 						attribute = new AttributeType();
 						attribute.setId(attributeList.get(j).getsId());
-						attribute.setValue(attributeList.get(j).getValue());
+						// attribute.setValue(attributeList.get(j).getValue()); // *********************************
 						vocabularyElement.getAttribute().add(attribute);
 						
 					}
@@ -1184,17 +1514,17 @@ public class EventToEventTypeConverter {
 				
 				if (vocabularyElementList.get(i).getExtension() != null) {
 					vocabularyElementExtension = new VocabularyElementExtensionType();
-					if(vocabularyElementList.get(i).getExtension().getMapExt() != null){
-						 List<MapExt> mapExtList=vocabularyElementList.get(i).getExtension().getMapExt();
-						 			 
-						 Map<QName, String> otherAttribute=new HashMap<QName, String>();
-							for(int j=0;i<mapExtList.size();j++){
-									QName name=new QName(mapExtList.get(j).getType(),"","");
-									otherAttribute.put(name,mapExtList.get(j).getValue());	
-							}
-							
-							vocabularyElementExtension.setOtherAttributes(otherAttribute);
-					 }
+//					if(vocabularyElementList.get(i).getExtension().getMapExt() != null){
+//						 List<MapExt> mapExtList=vocabularyElementList.get(i).getExtension().getMapExt();
+//						 			 
+//						 Map<QName, String> otherAttribute=new HashMap<QName, String>();
+////							for(int j=0;i<mapExtList.size();j++){
+////									QName name=new QName(mapExtList.get(j).getType(),"","");
+////									otherAttribute.put(name,mapExtList.get(j).getValue());	
+////							}
+//							
+//						//	vocabularyElementExtension.setOtherAttributes(otherAttribute); // *********************************
+//					 }
 					
 					vocabularyElement.setExtension(vocabularyElementExtension);
 				}

@@ -1,19 +1,18 @@
 package org.oliot.epcis.service.capture;
 
 import javax.jws.WebMethod;
+import javax.jws.WebParam;
 import javax.jws.WebService;
 
 import org.oliot.model.epcis.EPCISDocumentType;
 import org.oliot.model.epcis.EPCISMasterDataDocumentType;
 
 /**
- * Copyright (C) 2014 Jaewook Jack Byun
+ * Copyright (C) 2014-2016 Jaewook Byun
  *
- * This project is part of Oliot (oliot.org), pursuing the implementation of
- * Electronic Product Code Information Service(EPCIS) v1.1 specification in
- * EPCglobal.
- * [http://www.gs1.org/gsmp/kc/epcglobal/epcis/epcis_1_1-standard-20140520.pdf]
- * 
+ * This project is part of Oliot open source (http://oliot.org). Oliot EPCIS
+ * v1.2.x is Java Web Service complying with Electronic Product Code Information
+ * Service (EPCIS) v1.2.
  *
  * @author Jaewook Jack Byun, Ph.D student
  * 
@@ -24,12 +23,12 @@ import org.oliot.model.epcis.EPCISMasterDataDocumentType;
  *         bjw0829@kaist.ac.kr, bjw0829@gmail.com
  */
 
-@WebService
+@WebService(targetNamespace="urn:epcglobal:epcis-query:xsd:1")
 public interface CoreCaptureService {
 
 	@WebMethod(operationName = "EventCapture")
-	public void capture(EPCISDocumentType epcisDocument);
+	public void capture(@WebParam(name = "epcisDocument") EPCISDocumentType epcisDocument);
 
 	@WebMethod(operationName = "VocabularyCapture")
-	public void capture(EPCISMasterDataDocumentType epcisMasterDataDocument);
+	public void capture(@WebParam(name = "epcisMasterDataDocument") EPCISMasterDataDocumentType epcisMasterDataDocument);
 }

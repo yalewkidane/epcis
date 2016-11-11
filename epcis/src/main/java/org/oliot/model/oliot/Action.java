@@ -21,7 +21,7 @@ import javax.xml.bind.annotation.XmlType;
  * &lt;simpleType name="ActionType">
  *   &lt;restriction base="{http://www.w3.org/2001/XMLSchema}string">
  *     &lt;enumeration value="ADD"/>
- *     &lt;enumeration value="OBSERVE"/>
+ *     &lt;enumeration value="OBSERVE"/>f
  *     &lt;enumeration value="DELETE"/>
  *   &lt;/restriction>
  * &lt;/simpleType>

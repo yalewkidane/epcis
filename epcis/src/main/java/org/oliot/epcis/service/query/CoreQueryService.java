@@ -1,14 +1,32 @@
 package org.oliot.epcis.service.query;
 
-import java.net.URI;
 import java.util.List;
 
 import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebResult;
 import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
+import javax.jws.soap.SOAPBinding.ParameterStyle;
+import javax.xml.ws.ResponseWrapper;
 
-import org.oliot.model.epcis.QueryParams;
+import org.oliot.model.epcis.DuplicateSubscriptionException;
+import org.oliot.model.epcis.GetSubscriptionIDs;
+import org.oliot.model.epcis.ImplementationException;
+import org.oliot.model.epcis.InvalidURIException;
+import org.oliot.model.epcis.NoSuchNameException;
+import org.oliot.model.epcis.NoSuchSubscriptionException;
+import org.oliot.model.epcis.Poll;
+import org.oliot.model.epcis.QueryParameterException;
 import org.oliot.model.epcis.QueryResults;
-import org.oliot.model.epcis.SubscriptionControls;
+import org.oliot.model.epcis.QueryTooComplexException;
+import org.oliot.model.epcis.QueryTooLargeException;
+import org.oliot.model.epcis.SecurityException;
+import org.oliot.model.epcis.Subscribe;
+import org.oliot.model.epcis.SubscribeNotPermittedException;
+import org.oliot.model.epcis.SubscriptionControlsException;
+import org.oliot.model.epcis.Unsubscribe;
+import org.oliot.model.epcis.ValidationException;
 
 /**
  * Copyright (C) 2014 Jaewook Byun
@@ -28,29 +46,38 @@ import org.oliot.model.epcis.SubscriptionControls;
  *         bjw0829@kaist.ac.kr, bjw0829@gmail.com
  */
 
-@WebService
+@WebService(targetNamespace = "urn:epcglobal:epcis-query:xsd:1")
+@SOAPBinding(parameterStyle = ParameterStyle.BARE)
 public interface CoreQueryService {
 
-	@WebMethod
-	public void subscribe(String queryName, QueryParams params, URI dest,
-			SubscriptionControls controls, String subscriptionID);
+	@WebMethod(operationName = "Subscribe")
+	public void subscribe(@WebParam(name = "Subscribe") Subscribe subscribe)
+			throws NoSuchNameException, InvalidURIException, DuplicateSubscriptionException, QueryParameterException,
+			QueryTooComplexException, SubscriptionControlsException, SubscribeNotPermittedException, SecurityException,
+			ValidationException, ImplementationException;
 
-	@WebMethod
-	public void unsubscribe(String subscriptionID);
+	@WebMethod(operationName = "Unsubscribe")
+	public void unsubscribe(@WebParam(name = "Unsubscribe") Unsubscribe unsubscribe)
+			throws NoSuchSubscriptionException, ValidationException, ImplementationException;
 
-	@WebMethod
-	public QueryResults poll(String queryName, QueryParams params);
+	@WebMethod(operationName = "Poll")
+	@WebResult(name = "QueryResults")
+	public QueryResults poll(@WebParam(name = "Poll") Poll poll)
+			throws QueryParameterException, QueryTooLargeException, QueryTooComplexException, NoSuchNameException,
+			SecurityException, ValidationException, ImplementationException;
 
-	@WebMethod
-	public List<String> getQueryNames();
+	@WebMethod(operationName = "GetQueryNames")
+	public List<String> getQueryNames() throws SecurityException, ValidationException, ImplementationException;
 
-	@WebMethod
-	public List<String> getSubscriptionIDs(String queryName);
+	@WebMethod(operationName = "GetSubscriptionIDs")
+	public List<String> getSubscriptionIDs(@WebParam(name = "GetSubscriptionIDs") GetSubscriptionIDs getSubscriptionIDs)
+			throws NoSuchNameException, SecurityException, ValidationException, ImplementationException;
 
-	@WebMethod
-	public String getStandardVersion();
+	@WebMethod(operationName = "GetStandardVersion")
+	@ResponseWrapper(targetNamespace = "urn:epcglobal:epcis-query:xsd:1", localName = "GetStandardVersionResponse")
+	public String getStandardVersion() throws SecurityException, ValidationException, ImplementationException;
 
-	@WebMethod
-	public String getVendorVersion();
+	@WebMethod(operationName = "GetVendorVersion")
+	public String getVendorVersion() throws SecurityException, ValidationException, ImplementationException;
 
 }

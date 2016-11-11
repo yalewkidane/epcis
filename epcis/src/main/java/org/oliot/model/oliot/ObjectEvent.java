@@ -43,6 +43,10 @@ public class ObjectEvent{// extends EPCISEvent {
     protected Date recordTime;
     @XmlElement(required = true)
     protected String eventTimeZoneOffset;
+    
+    @OneToOne
+	@JoinColumn(name="baseExtension_id")
+    protected EPCISEventExtension baseExtension;
 	
 	@OneToOne
 	@JoinColumn(name="epcList_id")
@@ -69,11 +73,15 @@ public class ObjectEvent{// extends EPCISEvent {
 	@JoinColumn(name="ilmd_id")
 	protected ILMD ilmd;
 
-	
+    
     @OneToOne
-   	@JoinColumn(name="objectEventExtension_id")
+    @JoinColumn(name="objectEventExtension_id")
 	protected ObjectEventExtension extension;
 	
+    @OneToOne
+    @JoinColumn(name="baseExtensionMaps_id")
+    protected ExtensionMaps extensionMaps;
+    
 	@Transient
 	@XmlAnyElement(lax = true)
 	protected List<Object> any;
@@ -114,6 +122,14 @@ public class ObjectEvent{// extends EPCISEvent {
 
 	public void setEventTimeZoneOffset(String eventTimeZoneOffset) {
 		this.eventTimeZoneOffset = eventTimeZoneOffset;
+	}
+
+	public EPCISEventExtension getBaseExtension() {
+		return baseExtension;
+	}
+
+	public void setBaseExtension(EPCISEventExtension baseExtension) {
+		this.baseExtension = baseExtension;
 	}
 
 	public void setAny(List<Object> any) {
@@ -309,6 +325,17 @@ public class ObjectEvent{// extends EPCISEvent {
 	 */
 	public void setExtension(ObjectEventExtension value) {
 		this.extension = value;
+	}
+
+	
+	
+	
+	public ExtensionMaps getExtensionMaps() {
+		return extensionMaps;
+	}
+
+	public void setExtensionMaps(ExtensionMaps extensionMaps) {
+		this.extensionMaps = extensionMaps;
 	}
 
 	/**

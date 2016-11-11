@@ -5,7 +5,6 @@ import org.oliot.epcis.serde.mysql.CaptureOperationsBackend;
 import org.oliot.model.epcis.AggregationEventType;
 import org.oliot.model.epcis.ObjectEventType;
 import org.oliot.model.epcis.QuantityEventType;
-import org.oliot.model.epcis.SensorEventType;
 import org.oliot.model.epcis.TransactionEventType;
 import org.oliot.model.epcis.TransformationEventType;
 import org.oliot.model.epcis.VocabularyType;
@@ -36,7 +35,7 @@ public class MysqlCaptureUtil {
 
 	public void capture(AggregationEventType event)
 	{
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		
 		CaptureOperationsBackend mysqlOperationdao=ctx.getBean
 				("captureOperationsBackend", CaptureOperationsBackend.class);
@@ -48,7 +47,7 @@ public class MysqlCaptureUtil {
 	
 	public void capture(ObjectEventType event)
 	{
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		
 		CaptureOperationsBackend mysqlOperationdao=ctx.getBean
 				("captureOperationsBackend", CaptureOperationsBackend.class);
@@ -60,7 +59,7 @@ public class MysqlCaptureUtil {
 	
 	public void capture(QuantityEventType event)
 	{
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		
 		CaptureOperationsBackend mysqlOperationdao=ctx.getBean
 				("captureOperationsBackend", CaptureOperationsBackend.class);
@@ -73,7 +72,7 @@ public class MysqlCaptureUtil {
 	
 	public void capture(TransactionEventType event)
 	{
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		
 		CaptureOperationsBackend mysqlOperationdao=ctx.getBean
 				("captureOperationsBackend", CaptureOperationsBackend.class);
@@ -84,18 +83,7 @@ public class MysqlCaptureUtil {
 	}
 	public void capture(TransformationEventType event)
 	{
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
-		
-		CaptureOperationsBackend mysqlOperationdao=ctx.getBean
-				("captureOperationsBackend", CaptureOperationsBackend.class);
-		
-		mysqlOperationdao.save(event);
-		Configuration.logger.info(" Event Saved ");
-		((AbstractApplicationContext) ctx).close();
-	}
-	public void capture(SensorEventType event)
-	{
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		
 		CaptureOperationsBackend mysqlOperationdao=ctx.getBean
 				("captureOperationsBackend", CaptureOperationsBackend.class);
@@ -105,10 +93,11 @@ public class MysqlCaptureUtil {
 		((AbstractApplicationContext) ctx).close();
 	}
 	
+	
 	public void capture(VocabularyType vocabulary)
 	{
 		
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		
 		CaptureOperationsBackend mysqlOperationdao=ctx.getBean
 				("captureOperationsBackend", CaptureOperationsBackend.class);

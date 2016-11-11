@@ -26,8 +26,8 @@ public class TransformationEventExtension {
 
 	@Id @GeneratedValue(strategy=GenerationType.AUTO)
 	private int id;
-	@OneToMany
-	List<MapExt> mapExt=new ArrayList<MapExt>();
+//	@OneToMany
+//	List<MapExt> mapExt=new ArrayList<MapExt>();
 	   
 	@Transient
     protected List<String> any;
@@ -53,12 +53,12 @@ public class TransformationEventExtension {
 	public void setOtherAttributes(Map<String, String> otherAttributes) {
 		this.otherAttributes = otherAttributes;
 	}
-	public List<MapExt> getMapExt() {
-		return mapExt;
-	}
-	public void setMapExt(List<MapExt> mapExt) {
-		this.mapExt = mapExt;
-	}
+//	public List<MapExt> getMapExt() {
+//		return mapExt;
+//	}
+//	public void setMapExt(List<MapExt> mapExt) {
+//		this.mapExt = mapExt;
+//	}
 	
 	
 

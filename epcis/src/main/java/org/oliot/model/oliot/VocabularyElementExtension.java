@@ -65,8 +65,8 @@ public class VocabularyElementExtension {
 	@XmlAnyAttribute
 	private Map<QName, String> otherAttributes = new HashMap<QName, String>();
     
-    @OneToMany
-	List<MapExt> mapExt=new ArrayList<MapExt>();
+//    @OneToMany
+//	List<MapExt> mapExt=new ArrayList<MapExt>();
     
 	/**
 	 * Gets the value of the any property.
@@ -134,12 +134,12 @@ public class VocabularyElementExtension {
 		return otherAttributes;
 	}
 
-	public List<MapExt> getMapExt() {
-		return mapExt;
-	}
-
-	public void setMapExt(List<MapExt> mapExt) {
-		this.mapExt = mapExt;
-	}
+//	public List<MapExt> getMapExt() {
+//		return mapExt;
+//	}
+//
+//	public void setMapExt(List<MapExt> mapExt) {
+//		this.mapExt = mapExt;
+//	}
 
 }

@@ -31,8 +31,8 @@ public class QuantityEventExtension {
 	@Id @GeneratedValue(strategy=GenerationType.AUTO)
 	private int id;
 	
-	@OneToMany
-	List<MapExt> mapExt=new ArrayList<MapExt>();
+//	@OneToMany
+//	List<MapExt> mapExt=new ArrayList<MapExt>();
 	   
 	
 	
@@ -88,13 +88,13 @@ public class QuantityEventExtension {
 		super();
 	}
 
-	public List<MapExt> getMapExt() {
-		return mapExt;
-	}
-
-	public void setMapExt(List<MapExt> mapExt) {
-		this.mapExt = mapExt;
-	}
+//	public List<MapExt> getMapExt() {
+//		return mapExt;
+//	}
+//
+//	public void setMapExt(List<MapExt> mapExt) {
+//		this.mapExt = mapExt;
+//	}
 
 	public List<Object> getAny() {
 		return any;

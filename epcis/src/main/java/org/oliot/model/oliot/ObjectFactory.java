@@ -309,11 +309,11 @@ public class ObjectFactory {
     }
 
     /**
-     * Create an instance of {@link EPCISEventExtension }
+     * Create an instance of {@link EPCISEventExtension_R }
      * 
      */
-    public EPCISEventExtension createEPCISEventExtensionType() {
-        return new EPCISEventExtension();
+    public EPCISEventExtension_R createEPCISEventExtensionType() {
+        return new EPCISEventExtension_R();
     }
 
     /**

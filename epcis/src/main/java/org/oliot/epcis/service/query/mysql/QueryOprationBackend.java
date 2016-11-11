@@ -1,12 +1,16 @@
 package org.oliot.epcis.service.query.mysql;
 
+
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 
 import org.hibernate.Criteria;
 import org.hibernate.Query;
@@ -15,11 +19,16 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.persister.collection.CollectionPropertyNames;
 import org.hibernate.transform.DistinctRootEntityResultTransformer;
+import org.oliot.epcis.configuration.Configuration;
+import org.oliot.epcis.serde.mysql.PairType;
+import org.oliot.epcis.serde.mysql.ReaderUtility;
 import org.oliot.model.epcis.SubscriptionType;
 import org.oliot.model.oliot.Action;
 import org.oliot.model.oliot.AggregationEvent;
 import org.oliot.model.oliot.ObjectEvent;
+import org.oliot.model.oliot.PollParameters;
 import org.oliot.model.oliot.QuantityEvent;
 import org.oliot.model.oliot.ReadPoint;
 import org.oliot.model.oliot.SensorEvent;
@@ -58,6 +67,15 @@ public class QueryOprationBackend {
 	public void save(SubscriptionType subscriptionType){
 		Subscription subscription=new Subscription();
 		subscription = convertFromSubscriptionType(subscriptionType);
+		Session session = getSessionFactory().openSession();
+		Transaction tx = session.beginTransaction();
+		session.save(subscription);
+		tx.commit();
+		session.close();
+		
+	}
+	
+	public void save(Subscription subscription){
 		Session session = getSessionFactory().openSession();
 		Transaction tx = session.beginTransaction();
 		session.save(subscription);
@@ -244,64 +262,48 @@ public class QueryOprationBackend {
 	}
 	
 	public SubscriptionType convertToSubscriptionType(Subscription subscription){
-		SubscriptionType Subscription=new SubscriptionType(subscription.getQueryName(), subscription.getSubscriptionID(),
-				subscription.getDest(), subscription.getCronExpression(),subscription.isReportIfEmpty(), subscription.getEventType(),
-				subscription.getEventType(),subscription.getGE_eventTime(), subscription.getLT_eventTime(), subscription.getGE_recordTime(),
-				subscription.getLT_recordTime(), subscription.getEQ_action(), subscription.getEQ_bizStep(),
-				subscription.getEQ_disposition(), subscription.getEQ_readPoint(), subscription.getWD_readPoint(),
-				subscription.getEQ_bizLocation(), subscription.getWD_bizLocation(),
-				subscription.getEQ_transformationID(), subscription.getMATCH_epc(),
-				subscription.getMATCH_parentID(), subscription.getMATCH_inputEPC(),
-				subscription.getMATCH_outputEPC(), subscription.getMATCH_anyEPC(), subscription.getMATCH_epcClass(),
-				subscription.getMATCH_inputEPCClass(), subscription.getMATCH_outputEPCClass(),
-				subscription.getMATCH_anyEPCClass(), subscription.getEQ_quantity(), subscription.getGT_quantity(),
-				subscription.getGE_quantity(), subscription.getLT_quantity(), subscription.getLE_quantity(),
-				subscription.getOrderBy(), subscription.getOrderDirection(), subscription.getEventCountLimit(),
-				subscription.getMaxEventCount(), subscription.getParamMap());
 		
-		return Subscription;
+		PollParameters p=subscription.getPollParametrs();
+		org.oliot.model.epcis.PollParameters pollParametrs=new org.oliot.model.epcis.PollParameters(p.getQueryName(), p.getEventType(),
+				p.getGE_eventTime(), p.getLT_eventTime(),p.getGE_recordTime(), p.getLT_recordTime(), p.getEQ_action(), p.getEQ_bizStep(),
+				p.getEQ_disposition(),p.getEQ_readPoint(), p.getWD_readPoint(), p.getEQ_bizLocation(), p.getWD_bizLocation(),
+				p.getEQ_transformationID(), p.getMATCH_epc(), p.getMATCH_parentID(), p.getMATCH_inputEPC(),p.getMATCH_outputEPC(), 
+				p.getMATCH_anyEPC(), p.getMATCH_epcClass(), p.getMATCH_inputEPCClass(),	p.getMATCH_outputEPCClass(), p.getMATCH_anyEPCClass(), 
+				p.getEQ_quantity(), p.getGT_quantity(), p.getGE_quantity(), p.getLT_quantity(), p.getLE_quantity(), p.getEQ_eventID(),
+				p.getEXISTS_errorDeclaration(), p.getGE_errorDeclarationTime(), p.getLT_errorDeclarationTime(),
+				p.getEQ_errorReason(), p.getEQ_correctiveEventID(), p.getOrderBy(), p.getOrderDirection(),
+				p.getEventCountLimit(), p.getMaxEventCount(), p.getVocabularyName(), p.getIncludeAttributes(),
+				p.getIncludeChildren(), p.getAttributeNames(), p.getEQ_name(), p.getWD_name(), p.getHASATTR(),
+				p.getMaxElementCount(), p.getFormat(), p.getParams());
+
+		SubscriptionType subscriptionType=new SubscriptionType(subscription.getSubscriptionID(), subscription.getDest(), 
+				subscription.getSchedule(), subscription.getTriggerSub(),subscription.getInitialRecordTime(), 
+				subscription.getReportIfEmpty(), pollParametrs);
+		
+		
+		return subscriptionType;
+
 	}
 	
 	public Subscription convertFromSubscriptionType(SubscriptionType subscriptionType){
-		Subscription Subscription=new Subscription();
-		Subscription.setQueryName(subscriptionType.getQueryName());
-		Subscription.setSubscriptionID(subscriptionType.getSubscriptionID());
-		Subscription.setDest(subscriptionType.getDest());
-		Subscription.setCronExpression(subscriptionType.getCronExpression());
-		Subscription.setReportIfEmpty(subscriptionType.isReportIfEmpty());
-		Subscription.setEventType(subscriptionType.getEventType());
-		Subscription.setGE_eventTime(subscriptionType.getGE_eventTime());
-		Subscription.setLT_eventTime (subscriptionType.getLT_eventTime());;
-		Subscription.setGE_recordTime (subscriptionType.getGE_recordTime());
-		Subscription.setLT_recordTime (subscriptionType.getLT_recordTime());
-		Subscription.setEQ_action (subscriptionType.getEQ_action());
-		Subscription.setEQ_bizStep (subscriptionType.getEQ_bizStep());
-		Subscription.setEQ_disposition(subscriptionType.getEQ_disposition());
-		Subscription.setEQ_readPoint(subscriptionType.getEQ_readPoint());
-		Subscription.setWD_readPoint(subscriptionType.getWD_readPoint());
-		Subscription.setEQ_bizLocation(subscriptionType.getEQ_bizLocation());
-		Subscription.setWD_bizLocation(subscriptionType.getWD_bizLocation());
-		Subscription.setEQ_transformationID(subscriptionType.getEQ_transformationID());
-		Subscription.setMATCH_epc(subscriptionType.getMATCH_epc());
-		Subscription.setMATCH_parentID(subscriptionType.getMATCH_parentID());
-		Subscription.setMATCH_inputEPC(subscriptionType.getMATCH_inputEPC());
-		Subscription.setMATCH_outputEPC(subscriptionType.getMATCH_outputEPC());
-		Subscription.setMATCH_anyEPC(subscriptionType.getMATCH_anyEPC());
-		Subscription.setMATCH_epcClass(subscriptionType.getMATCH_epcClass());
-		Subscription.setMATCH_inputEPCClass(subscriptionType.getMATCH_inputEPCClass());
-		Subscription.setMATCH_outputEPCClass (subscriptionType.getMATCH_outputEPCClass());
-		Subscription.setMATCH_anyEPCClass (subscriptionType.getMATCH_anyEPCClass());
-		Subscription.setEQ_quantity(subscriptionType.getEQ_quantity());
-		Subscription.setGT_quantity(subscriptionType.getGT_quantity());
-		Subscription.setGE_quantity(subscriptionType.getGE_quantity());
-		Subscription.setLT_quantity(subscriptionType.getLT_quantity());
-		Subscription.setLE_quantity(subscriptionType.getLE_quantity());
-		Subscription.setOrderBy (subscriptionType.getOrderBy());
-		Subscription.setOrderDirection (subscriptionType.getOrderDirection());
-		Subscription.setEventCountLimit(subscriptionType.getEventCountLimit());
-		Subscription.setMaxEventCount(subscriptionType.getMaxEventCount());
+	
+		org.oliot.model.epcis.PollParameters p=subscriptionType.getPollParameters();
+		PollParameters pollParameters=new PollParameters(p.getQueryName(), p.getEventType(),
+				p.getGE_eventTime(), p.getLT_eventTime(),p.getGE_recordTime(), p.getLT_recordTime(), p.getEQ_action(), p.getEQ_bizStep(),
+				p.getEQ_disposition(),p.getEQ_readPoint(), p.getWD_readPoint(), p.getEQ_bizLocation(), p.getWD_bizLocation(),
+				p.getEQ_transformationID(), p.getMATCH_epc(), p.getMATCH_parentID(), p.getMATCH_inputEPC(),p.getMATCH_outputEPC(), 
+				p.getMATCH_anyEPC(), p.getMATCH_epcClass(), p.getMATCH_inputEPCClass(),	p.getMATCH_outputEPCClass(), p.getMATCH_anyEPCClass(), 
+				p.getEQ_quantity(), p.getGT_quantity(), p.getGE_quantity(), p.getLT_quantity(), p.getLE_quantity(), p.getEQ_eventID(),
+				p.getEXISTS_errorDeclaration(), p.getGE_errorDeclarationTime(), p.getLT_errorDeclarationTime(),
+				p.getEQ_errorReason(), p.getEQ_correctiveEventID(), p.getOrderBy(), p.getOrderDirection(),
+				p.getEventCountLimit(), p.getMaxEventCount(), p.getVocabularyName(), p.getIncludeAttributes(),
+				p.getIncludeChildren(), p.getAttributeNames(), p.getEQ_name(), p.getWD_name(), p.getHASATTR(),
+				p.getMaxElementCount(), p.getFormat(), p.getParams());
 		
-		return Subscription;
+		Subscription subscription=new Subscription(subscriptionType.getSubscriptionID(), subscriptionType.getDest(), 
+				subscriptionType.getSchedule(), subscriptionType.getTrigger(),subscriptionType.getInitialRecordTime(), 
+				subscriptionType.getReportIfEmpty(), pollParameters);
+		return subscription;
 	}
 	
 	public Criteria	makeVocQueryCriteria(String vocabularyName,
@@ -435,7 +437,9 @@ public Criteria makeQueryCriteria( String eventType,
 	String MATCH_outputEPC, String MATCH_anyEPC, String MATCH_epcClass,
 	String MATCH_inputEPCClass, String MATCH_outputEPCClass,
 	String MATCH_anyEPCClass, String EQ_quantity, String GT_quantity,
-	String GE_quantity, String LT_quantity, String LE_quantity,
+	String GE_quantity, String LT_quantity, String LE_quantity,	
+	String EQ_eventID, Boolean EXISTS_errorDeclaration, String GE_errorDeclarationTime,
+	String LT_errorDeclarationTime,String EQ_errorReason,String EQ_correctiveEventID,
 	String orderBy, String orderDirection, String eventCountLimit,
 	String maxEventCount, Map<String, String> paramMap) {
 	Session session = getSessionFactory().openSession();
@@ -525,7 +529,126 @@ try {
 		criteria.add(Restrictions.lt("recordTime", date));
 
 	}
+//------------------------------------------	
+	/**
+	 * EQ_eventID : If this parameter is specified, the result will only
+	 * include events that (a) have a non-null eventID field; and where (b)
+	 * the eventID field is equal to one of the values specified in this
+	 * parameter. If this parameter is omitted, events are returned
+	 * regardless of the value of the eventID field or whether the eventID
+	 * field exists at all.
+	 * 
+	 * List of String
+	 * 
+	 */
+	if (EQ_eventID != null) {
+		List<String> subStringList=MysqlQueryUtil.getStringList(EQ_eventID);
+		if(subStringList.size()>0){
+			criteria.createAlias("baseExtension", "beventID");
+			criteria.add(Restrictions.in("beventID.eventID", subStringList));
+		}
 
+	}
+	/**
+	 * GE_errorDeclaration Time: If this parameter is specified, the result
+	 * will only include events that (a) contain an ErrorDeclaration ; and
+	 * where (b) the value of the errorDeclarationTime field is greater than
+	 * or equal to the specified value. If this parameter is omitted, events
+	 * are returned regardless of whether they contain an ErrorDeclaration
+	 * or what the value of the errorDeclarationTime field is.
+	 */
+	if (GE_errorDeclarationTime != null) {
+		SimpleDateFormat sdf = new SimpleDateFormat(
+				"yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+		Date date=sdf.parse(GE_errorDeclarationTime);
+		criteria.createAlias("baseExtension", "bGE_errorDeclarationTime");
+		criteria.createAlias("bGE_errorDeclarationTime.errorDeclaration", "GE_errorDeclarationTimeDec");
+		criteria.add(Restrictions.ge("GE_errorDeclarationTimeDec.declarationTime", date));
+	}
+
+	/**
+	 * LT_errorDeclaration Time: contain an ErrorDeclaration ; and where (b)
+	 * the value of the errorDeclarationTime field is less than to the
+	 * specified value. If this parameter is omitted, events are returned
+	 * regardless of whether they contain an ErrorDeclaration or what the
+	 * value of the errorDeclarationTime field is.
+	 */
+	if (LT_errorDeclarationTime != null) {
+		SimpleDateFormat sdf = new SimpleDateFormat(
+				"yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+		Date date=sdf.parse(LT_errorDeclarationTime);
+		criteria.createAlias("baseExtension", "bLT_errorDeclarationTime");
+		criteria.createAlias("bLT_errorDeclarationTime.errorDeclaration", "LT_errorDeclarationTimeDec");
+		criteria.add(Restrictions.lt("LT_errorDeclarationTimeDec.declarationTime", date));
+	}
+
+
+	/**
+	 * EQ_errorReason: If this parameter is specified, the result will only
+	 * include events that (a) contain an ErrorDeclaration ; and where (b)
+	 * the error declaration contains a non-null reason field; and where (c)
+	 * the reason field is equal to one of the values specified in this
+	 * parameter. If this parameter is omitted, events are returned
+	 * regardless of the they contain an ErrorDeclaration or what the value
+	 * of the reason field is.
+	 */
+
+	if (EQ_errorReason != null) {
+		List<String> subStringList=MysqlQueryUtil.getStringList(EQ_errorReason);
+		if(subStringList.size()>0){
+			criteria.createAlias("baseExtension", "bErrorReason");
+			criteria.createAlias("bErrorReason.errorDeclaration", "EQ_errorReasonErrorDec");
+			criteria.add(Restrictions.in("EQ_errorReasonErrorDec.reason", subStringList));
+		}
+	}
+
+	/**
+	 * EQ_correctiveEventID: If this parameter is specified, the result will
+	 * only include events that (a) contain an ErrorDeclaration ; and where
+	 * (b) one of the elements of the correctiveEventIDs list is equal to
+	 * one of the values specified in this parameter. If this parameter is
+	 * omitted, events are returned regardless of the they contain an
+	 * ErrorDeclaration or the contents of the correctiveEventIDs list.
+	 */
+
+	if (EQ_correctiveEventID != null) {
+		List<String> subStringList=MysqlQueryUtil.getStringList(EQ_correctiveEventID);
+		if(subStringList.size()>0){
+			
+			criteria.createAlias("baseExtension", "bcorrectiveEventID");
+			criteria.createAlias("bcorrectiveEventID.errorDeclaration", "correctiveEventIDDec");
+			criteria.createAlias("correctiveEventIDDec.correctiveEventIDs", "ceids");
+			criteria.createAlias("ceids.correctiveEventID", "ceid");
+			criteria.add(Restrictions.in("ceid.correctiveEventID", subStringList));
+		}
+//		BsonArray paramArray = getParamBsonArray(p.getEQ_correctiveEventID());
+//		BsonDocument queryObject = getQueryObject(new String[] { "errorDeclaration.correctiveEventIDs" },
+//				paramArray);
+//		if (queryObject != null) {
+//			queryList.add(queryObject);
+//		}
+	}
+
+	/**
+	 * EXISTS_errorDeclaration: If this parameter is specified, the result
+	 * will only include events that contain an ErrorDeclaration . If this
+	 * parameter is omitted, events are returned regardless of whether they
+	 * contain an ErrorDeclaration .
+	 */
+
+	if (EXISTS_errorDeclaration != null) {
+		criteria.createAlias("baseExtension", "bEXISTS_errorD");
+		criteria.add(Restrictions.isNotNull("bEXISTS_errorD.errorDeclaration"));
+		
+//		Boolean isExist = Boolean.parseBoolean(p.getEXISTS_errorDeclaration().toString());
+//		BsonBoolean isExistBson = new BsonBoolean(isExist);
+//		BsonDocument query = getExistsQueryObject("errorDeclaration", null, isExistBson);
+//		if (query != null)
+//			queryList.add(query);
+	}
+	
+	
+//---------------------------------------------------
 	/**
 	 * EQ_action: If specified, the result will only include events that
 	 * (a) have an action field; and where (b) the value of the action
@@ -589,6 +712,7 @@ try {
 	 * whether the readPoint field exists at all.
 	 */
 	if (EQ_readPoint != null) {
+		System.out.println("In criteria:  EQ_readPoint: "+EQ_readPoint);
 		List<String> subStringList=MysqlQueryUtil.getStringList(EQ_readPoint);
 		if(subStringList.size()>0){
 			criteria.createAlias("readPoint", "rp");
@@ -1066,24 +1190,33 @@ try {
 			 * EQ_, the namespace URI for the extension field, a pound
 			 * sign (#), and the name of the extension field.
 			 */
-			if (paramName.startsWith("EQ_")) {
-				String type = paramName
+			if (paramName.startsWith("EQ_")&&!paramName.startsWith("EQ_INNER_")&&!paramName.startsWith("EQ_ILMD_")&&!paramName.startsWith("EQ_ERROR_")) {
+				String qName = paramName
 						.substring(3, paramName.length());
 				List<String> value=MysqlQueryUtil.getStringList(paramValues);
+				
+				qName=qName.replaceAll("!", "#");
+				List<PairType> ValueTypeList=new ArrayList<PairType>();
+				ReaderUtility.getValueTypeList(ValueTypeList,value);
+				criteria.createAlias("extensionMaps.extensionMapList", "extMapList");
+				ReaderUtility.extensionHierarchCriteria_EQ(criteria,ValueTypeList,qName,"extMapList",false);
+				
+				
 				if (eventType.equals("AggregationEvent")
 						|| eventType.equals("ObjectEvent")
 						|| eventType.equals("TransactionEvent")) {
-					criteria.createAlias("extension.extension.mapExt", "ext");
-					criteria.add(Restrictions.and(
-							Restrictions.like("ext.type", type),
-							Restrictions.in("ext.value", value)));
+//					Configuration.logger.info("paramName: " +paramName);
+//					criteria.createAlias("extension.extension.mapExt", "ext");
+//					criteria.add(Restrictions.and(
+//							Restrictions.like("ext.type", type),
+//							Restrictions.in("ext.value", value)));
 				}
 				if (eventType.equals("QuantityEvent")
 						|| eventType.equals("TransformationEvent")) {
-					criteria.createAlias("extension.mapExt", "ext");
-					criteria.add(Restrictions.and(
-							Restrictions.like("ext.type", type),
-							Restrictions.in("ext.value", value)));
+//					criteria.createAlias("extension.mapExt", "ext");
+//					criteria.add(Restrictions.and(
+//							Restrictions.like("ext.type", type),
+//							Restrictions.in("ext.value", value)));
 				}
 			}
 
@@ -1102,181 +1235,540 @@ try {
 					|| paramName.startsWith("GE_")
 					|| paramName.startsWith("LT_")
 					|| paramName.startsWith("LE_")) {
-				String type = paramName
-						.substring(3, paramName.length());
-				SimpleDateFormat sdf = new SimpleDateFormat(
-						"yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-				Date value=sdf.parse("2013-06-08T23:58:56.591-09:00");
-				float value2=0;
-				try{
-					value2=Float.parseFloat(paramValues);
-				}catch(Exception e){}
-				try{
-					value = sdf.parse(paramValues);
-				}catch(Exception e){}
 				
-				
-				if (eventType.equals("AggregationEvent")
-						|| eventType.equals("ObjectEvent")
-						|| eventType.equals("TransactionEvent")) {
-					criteria.createAlias("extension.extension.mapExt", "ext");
-				
+				if(!paramName.startsWith("GT_INNER_")&&!paramName.startsWith("GE_INNER_")&&
+						!paramName.startsWith("LT_INNER_")&&!paramName.startsWith("LE_INNER_")&&
+						!paramName.startsWith("GT_ILMD_")&&!paramName.startsWith("GE_ILMD_")&&
+						!paramName.startsWith("LT_ILMD_")&&!paramName.startsWith("LE_ILMD_")&&
+						!paramName.startsWith("GT_ERROR_")&&!paramName.startsWith("GE_ERROR_")&&
+						!paramName.startsWith("LT_ERROR_")&&!paramName.startsWith("LE_ERROR_")){
+					String qName = paramName
+							.substring(3, paramName.length());
+					List<String> value=MysqlQueryUtil.getStringList(paramValues);
+					
+					qName=qName.replaceAll("!", "#");
+					List<PairType> ValueTypeList=new ArrayList<PairType>();
+					ReaderUtility.getValueTypeList(ValueTypeList,value);
+					criteria.createAlias("extensionMaps.extensionMapList", "extMapListNeq");
+					//ReaderUtility.extensionHierarchEQ_Criteria(criteria,ValueTypeList,qName,"extMapList",false);
+					
 					if (paramName.startsWith("GT_")) {
-						criteria.add(Restrictions.or(
-								Restrictions.and(
-								Restrictions.like("ext.type", type),
-								Restrictions.gt("ext.floatValue", value2)),
-								Restrictions.and(
-										Restrictions.like("ext.type", type),
-										Restrictions.gt("ext.TimeValue", value))));
-					}
-					if (paramName.startsWith("GE_")) {
-						criteria.add(Restrictions.or(
-								Restrictions.and(
-								Restrictions.like("ext.type", type),
-								Restrictions.ge("ext.floatValue", value2)),
-								Restrictions.and(
-										Restrictions.like("ext.type", type),
-										Restrictions.ge("ext.TimeValue", value))));
-					}
-					if (paramName.startsWith("LT_")) {
-						criteria.add(Restrictions.or(
-								Restrictions.and(
-								Restrictions.like("ext.type", type),
-								Restrictions.lt("ext.floatValue", value2)),
-								Restrictions.and(
-										Restrictions.like("ext.type", type),
-										Restrictions.lt("ext.TimeValue", value))));;
-					}
-					if (paramName.startsWith("LE_")) {
-						criteria.add(Restrictions.or(
-								Restrictions.and(
-								Restrictions.like("ext.type", type),
-								Restrictions.le("ext.floatValue", value2)),
-								Restrictions.and(
-										Restrictions.like("ext.type", type),
-										Restrictions.le("ext.TimeValue", value))));
+						ReaderUtility.extensionHierarchCriteria_GT(criteria,ValueTypeList,qName,"extMapListNeq",false);
+					}else if (paramName.startsWith("GE_")){
+						ReaderUtility.extensionHierarchCriteria_GE(criteria,ValueTypeList,qName,"extMapListNeq",false);
+					}else if (paramName.startsWith("LT_")){
+						ReaderUtility.extensionHierarchCriteria_LT(criteria,ValueTypeList,qName,"extMapListNeq",false);
+					}else if (paramName.startsWith("LE_")){
+						ReaderUtility.extensionHierarchCriteria_LE(criteria,ValueTypeList,qName,"extMapListNeq",false);
 					}
 				}
-				if (eventType.equals("QuantityEvent")
-						|| eventType.equals("TransformationEvent")) {
-					criteria.createAlias("extension.mapExt", "ext");
-					if (paramName.startsWith("GT_")) {
-						criteria.add(Restrictions.or(
-								Restrictions.and(
-								Restrictions.like("ext.type", type),
-								Restrictions.gt("ext.floatValue", value2)),
-								Restrictions.and(
-										Restrictions.like("ext.type", type),
-										Restrictions.gt("ext.TimeValue", value))));
-					}
-					if (paramName.startsWith("GE_")) {
-					criteria.add(Restrictions.or(
-							Restrictions.and(
-							Restrictions.like("ext.type", type),
-							Restrictions.ge("ext.floatValue", value2)),
-							Restrictions.and(
-									Restrictions.like("ext.type", type),
-									Restrictions.ge("ext.TimeValue", value))));
-					}
-					if (paramName.startsWith("LT_")) {
-					criteria.add(Restrictions.or(
-							Restrictions.and(
-							Restrictions.like("ext.type", type),
-							Restrictions.lt("ext.floatValue", value2)),
-							Restrictions.and(
-									Restrictions.like("ext.type", type),
-									Restrictions.lt("ext.TimeValue", value))));
-					}
-					if (paramName.startsWith("LE_")) {
-						criteria.add(Restrictions.or(
-								Restrictions.and(
-								Restrictions.like("ext.type", type),
-								Restrictions.le("ext.floatValue", value2)),
-								Restrictions.and(
-										Restrictions.like("ext.type", type),
-										Restrictions.le("ext.TimeValue", value))));
-					}
-				}
+				
+				
+			
 			}
 		if (paramName.startsWith("EQ_ILMD_")){
-			if (eventType.equals("TransformationEvent")
-					|| eventType.equals("ObjectEvent")){
-				String type = paramName
-						.substring(8, paramName.length());
-				List<String> value=MysqlQueryUtil.getStringList(paramValues);
-				criteria.createAlias("ilmd.mapExt", "mpext");
-				criteria.add(Restrictions.and(
-						Restrictions.like("mpext.type", type),
-						Restrictions.in("mpext.value", value)));
-			}
+
+			String qName = paramName
+					.substring(8, paramName.length());
+			List<String> value=MysqlQueryUtil.getStringList(paramValues);
 			
+			qName=qName.replaceAll("!", "#");
+			List<PairType> ValueTypeList=new ArrayList<PairType>();
+			ReaderUtility.getValueTypeList(ValueTypeList,value);
+			if (eventType.equals("TransformationEvent")
+					|| eventType.equals("ObjectEvent")) {
+				if(eventType.equals("TransformationEvent")){
+					//ilmd
+					criteria.createAlias("ilmd.extensionMaps", "ilextmapeq");
+					criteria.createAlias("ilextmapeq.extensionMapList", "ilextmapeqList");
+					ReaderUtility.extensionHierarchCriteria_EQ(criteria,ValueTypeList,qName,"ilextmapeqList",false);
+				}else if(eventType.equals("ObjectEvent")){
+					
+					criteria.createAlias("extension.ilmd", "exIleqilmd");
+					criteria.createAlias("exIleqilmd.extensionMaps", "extMapeqilmd");
+					criteria.createAlias("extMapeqilmd.extensionMapList", "extMapListeqilmd");
+					
+					//ilmdCriteria(Criteria criteria, List<PairType> ValueTypeList, String qName, String alias,boolean isInner){
+					ReaderUtility.extensionHierarchCriteria_EQ(criteria,ValueTypeList,qName,"extMapListeqilmd",false);
+				}
+			}
+						
 		}
+		
+		
+		/**
+		 * Analogous to EQ_fieldname , GT_fieldname , GE_fieldname ,
+		 * GE_fieldname , LT_fieldname , and LE_fieldname , respectively,
+		 * but matches events whose ILMD area (Section 7.3.6) contains a field
+		 * having the specified fieldname whose integer, float, or time value
+		 * matches the specified value according to the specified relational operator.
+		 */
 		if (paramName.startsWith("GT_ILMD_")
 				|| paramName.startsWith("GE_ILMD_")
 				|| paramName.startsWith("LT_ILMD_")
 				|| paramName.startsWith("LE_ILMD_")) {
-			String type = paramName
-					.substring(3, paramName.length());
-			SimpleDateFormat sdf = new SimpleDateFormat(
-					"yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-			Date value=sdf.parse("2013-06-08T23:58:56.591-09:00");
-			float value2=0;
-			try{
-				value2=Float.parseFloat(paramValues);
-			}catch(Exception e){}
-			try{
-				value = sdf.parse(paramValues);
-			}catch(Exception e){}
+			String qName = paramName
+					.substring(8, paramName.length());
+			List<String> value=MysqlQueryUtil.getStringList(paramValues);
+			
+			qName=qName.replaceAll("!", "#");
+			List<PairType> ValueTypeList=new ArrayList<PairType>();
+			ReaderUtility.getValueTypeList(ValueTypeList,value);
 			if (eventType.equals("TransformationEvent")
-					|| eventType.equals("ObjectEvent")){
-				criteria.createAlias("ilmd.mapExt", "mpext");
-				if (paramName.startsWith("GT_")) {
-					criteria.add(Restrictions.or(
-							Restrictions.and(
-							Restrictions.like("mpext.type", type),
-							Restrictions.gt("mpext.floatValue", value2)),
-							Restrictions.and(
-									Restrictions.like("mpext.type", type),
-									Restrictions.gt("mpext.TimeValue", value))));
-					}
-				if (paramName.startsWith("LE_")) {
-					criteria.add(Restrictions.or(
-							Restrictions.and(
-							Restrictions.like("mpext.type", type),
-							Restrictions.le("mpext.floatValue", value2)),
-							Restrictions.and(
-									Restrictions.like("mpext.type", type),
-									Restrictions.le("mpext.TimeValue", value))));
-					}
-				if (paramName.startsWith("GE_")) {
-					criteria.add(Restrictions.or(
-							Restrictions.and(
-							Restrictions.like("mpext.type", type),
-							Restrictions.ge("mpext.floatValue", value2)),
-							Restrictions.and(
-									Restrictions.like("mpext.type", type),
-									Restrictions.ge("mpext.TimeValue", value))));
-					}
-				if (paramName.startsWith("LT_")) {
-					criteria.add(Restrictions.or(
-							Restrictions.and(
-							Restrictions.like("mpext.type", type),
-							Restrictions.lt("mpext.floatValue", value2)),
-							Restrictions.and(
-									Restrictions.like("mpext.type", type),
-									Restrictions.lt("mpext.TimeValue", value))));
-					}
+					|| eventType.equals("ObjectEvent")) {
+				if(eventType.equals("TransformationEvent")){
+					//ilmd
+					criteria.createAlias("ilmd.extensionMaps", "ilextmapeq");
+					criteria.createAlias("ilextmapeq.extensionMapList", "ilextmapNeqList");
+					ReaderUtility.extensionHierarchCriteria_EQ(criteria,ValueTypeList,qName,"ilextmapNeqList",false);
+				}else if(eventType.equals("ObjectEvent")){
+					
+					criteria.createAlias("extension.ilmd", "exIleqilmd");
+					criteria.createAlias("exIleqilmd.extensionMaps", "extMapeqilmd");
+					criteria.createAlias("extMapeqilmd.extensionMapList", "ilextmapNeqList");
+					
+				
+				}
+				
+				if (paramName.startsWith("GT_")){
+					ReaderUtility.extensionHierarchCriteria_GT(criteria,ValueTypeList,qName,"ilextmapNeqList",false);
+				}else if (paramName.startsWith("GE_")){
+					ReaderUtility.extensionHierarchCriteria_GE(criteria,ValueTypeList,qName,"ilextmapNeqList",false);
+				}else if (paramName.startsWith("LT_")){
+					ReaderUtility.extensionHierarchCriteria_LT(criteria,ValueTypeList,qName,"ilextmapNeqList",false);
+				}else if (paramName.startsWith("LE_")){
+					ReaderUtility.extensionHierarchCriteria_LE(criteria,ValueTypeList,qName,"ilextmapNeqList",false);
+				}
+			}
+			
+			
+		}
+		/**
+		 * Analogous to EQ_fieldname , but matches inner extension elements;
+		 * that is, any XML element nested within a top-level extension
+		 * element. Note that a matching inner element may exist within in
+		 * more than one top-level element or may occur more than once
+		 * within a single top-level element; this parameter matches if at
+		 * least one matching occurrence is found anywhere in the event
+		 * (except at top-level).
+		 */
+
+		if (paramName.startsWith("EQ_INNER_")&&
+				!paramName.startsWith("EQ_INNER_ILMD_")&&
+				!paramName.startsWith("EQ_INNER_ERROR_")) {
+			String qName = paramName
+					.substring(9, paramName.length());
+			List<String> value=MysqlQueryUtil.getStringList(paramValues);
+			
+			qName=qName.replaceAll("!", "#");
+			List<PairType> ValueTypeList=new ArrayList<PairType>();
+			ReaderUtility.getValueTypeList(ValueTypeList,value);
+			criteria.createAlias("extensionMaps.extensionMapList", "extMapEqInList");
+			ReaderUtility.extensionHierarchCriteria_EQ(criteria,ValueTypeList,qName,"extMapEqInList",true);
+			
+			
+		}
+		
+		/**
+		 * Like EQ_INNER _ fieldname as described above, but may be applied to
+		 * a field of type Int, Float, or Time.
+		 */
+		if (paramName.startsWith("GT_INNER_")
+				|| paramName.startsWith("GE_INNER_")
+				|| paramName.startsWith("LT_INNER_")
+				|| paramName.startsWith("LE_INNER_")) {
+			
+			if(!paramName.startsWith("GT_INNER_ILMD_")&& !paramName.startsWith("GE_INNER_ILMD_")
+				&& !paramName.startsWith("LT_INNER_ILMD_")&& !paramName.startsWith("LE_INNER_ILMD_")&&
+				!paramName.startsWith("GT_INNER_ERROR_")&& !paramName.startsWith("GE_INNER_ERROR_")
+				&& !paramName.startsWith("LT_INNER_ERROR_")&& !paramName.startsWith("LE_INNER_ERROR_")){
+				
+				String qName = paramName
+						.substring(9, paramName.length());
+				List<String> value=MysqlQueryUtil.getStringList(paramValues);
+				
+				qName=qName.replaceAll("!", "#");
+				List<PairType> ValueTypeList=new ArrayList<PairType>();
+				ReaderUtility.getValueTypeList(ValueTypeList,value);
+				criteria.createAlias("extensionMaps.extensionMapList", "extMapNeqInList");
+				
+				if (paramName.startsWith("GT_INNER_")) {
+					ReaderUtility.extensionHierarchCriteria_GT(criteria,ValueTypeList,qName,"extMapNeqInList",true);
+				}else if (paramName.startsWith("GE_INNER_")){
+					ReaderUtility.extensionHierarchCriteria_GE(criteria,ValueTypeList,qName,"extMapNeqInList",true);
+				}else if (paramName.startsWith("LT_INNER_")){
+					ReaderUtility.extensionHierarchCriteria_LT(criteria,ValueTypeList,qName,"extMapNeqInList",true);
+				}else if (paramName.startsWith("LE_INNER_")){
+					ReaderUtility.extensionHierarchCriteria_LE(criteria,ValueTypeList,qName,"extMapNeqInList",true);
+				}
 			}
 			
 		}
 		
+		/**
+		 * Analogous to EQ_ILMD_fieldname , but matches inner ILMD elements; that is, any XML element nested at 
+		 * any level within a top-level ILMD element. Note that a matching inner element may exist within more 
+		 * than one top-level element or may occur more than once within a single top-level element; this parameter 
+		 * matches if at least one matching occurrence is found anywhere in the ILMD section (except at top-level).
+		 */
+		if (paramName.startsWith("EQ_INNER_ILMD_")) {
+			String qName = paramName
+					.substring(14, paramName.length());
+			List<String> value=MysqlQueryUtil.getStringList(paramValues);
+			
+			qName=qName.replaceAll("!", "#");
+			List<PairType> ValueTypeList=new ArrayList<PairType>();
+			ReaderUtility.getValueTypeList(ValueTypeList,value);
+			if (eventType.equals("TransformationEvent")
+					|| eventType.equals("ObjectEvent")) {
+				if(eventType.equals("TransformationEvent")){
+					//ilmd
+					criteria.createAlias("ilmd.extensionMaps", "ilextmapeqInn");
+					criteria.createAlias("ilextmapeqInn.extensionMapList", "ilextmapeqInnList");
+					ReaderUtility.extensionHierarchCriteria_EQ(criteria,ValueTypeList,qName,"ilextmapeqInnList",true);
+				}else if(eventType.equals("ObjectEvent")){
+					
+					criteria.createAlias("extension.ilmd", "exIleqInnilmd");
+					criteria.createAlias("exIleqInnilmd.extensionMaps", "extMapeqInnilmd");
+					criteria.createAlias("extMapeqInnilmd.extensionMapList", "extMapListeqInnilmd");
+					
+					//ilmdCriteria(Criteria criteria, List<PairType> ValueTypeList, String qName, String alias,boolean isInner){
+					ReaderUtility.extensionHierarchCriteria_EQ(criteria,ValueTypeList,qName,"extMapListeqInnilmd",true);
+				}
+			}
+			
+			
+		}
+		/**
+		 * Like EQ_INNER _ ILMD_ fieldname as described above, but may be
+		 * applied to a field of type Int, Float, or Time.
+		 */
+		if(paramName.startsWith("GT_INNER_ILMD_")
+				|| paramName.startsWith("GE_INNER_ILMD_")
+				|| paramName.startsWith("LT_INNER_ILMD_")
+				|| paramName.startsWith("LE_INNER_ILMD_")){
+			
+			String qName = paramName
+					.substring(14, paramName.length());
+			List<String> value=MysqlQueryUtil.getStringList(paramValues);
+			
+			qName=qName.replaceAll("!", "#");
+			List<PairType> ValueTypeList=new ArrayList<PairType>();
+			ReaderUtility.getValueTypeList(ValueTypeList,value);
+			criteria.createAlias("extensionMaps.extensionMapList", "extMapNeqInnInList");
+			String alias="";
+			if (eventType.equals("TransformationEvent")
+					|| eventType.equals("ObjectEvent")) {
+				if(eventType.equals("TransformationEvent")){
+					//ilmd
+					criteria.createAlias("ilmd.extensionMaps", "ilextmapNeqInnIl");
+					criteria.createAlias("ilextmapNeqInnIl.extensionMapList", "ilextmapNeqInnIlList");
+					alias="ilextmapNeqInnIlList";
+				}else if(eventType.equals("ObjectEvent")){
+					
+					criteria.createAlias("extension.ilmd", "exIlNeqInnilmd");
+					criteria.createAlias("exIlNeqInnilmd.extensionMaps", "extMapNeqInnilmd");
+					criteria.createAlias("extMapNeqInnilmd.extensionMapList", "extMapListNeqInnilmd");
+					alias="extMapListNeqInnilmd";
+				}
+				
+				if (paramName.startsWith("GT_INNER_ILMD_")) {
+					ReaderUtility.extensionHierarchCriteria_GT(criteria,ValueTypeList,qName,alias,true);
+				}else if (paramName.startsWith("GE_INNER_ILMD_")){
+					ReaderUtility.extensionHierarchCriteria_GE(criteria,ValueTypeList,qName,alias,true);
+				}else if (paramName.startsWith("LT_INNER_ILMD_")){
+					ReaderUtility.extensionHierarchCriteria_LT(criteria,ValueTypeList,qName,alias,true);
+				}else if (paramName.startsWith("LE_INNER_ILMD_")){
+					ReaderUtility.extensionHierarchCriteria_LE(criteria,ValueTypeList,qName,alias,true);
+				}
+			}
+			
+			
+		
+		}
+		
+		
+		
+		/**
+		 * Like EQ_fieldname as described above, but may be applied to a field
+		 * of any type (including complex types). The result will include events
+		 * that have a non-empty field named fieldname .Fieldname is constructed 
+		 * as for EQ_fieldname .Note that the value for this query parameter is ignored.
+		 */
+		
+		if(paramName.startsWith("EXISTS_")){
+			if(!paramName.startsWith("EXISTS_INNER")&&
+					!paramName.startsWith("EXISTS_ILMD_")&&
+					!paramName.startsWith("EXISTS_errorDeclaration")&&
+					!paramName.startsWith("EXISTS_ERROR")){
+				String qName = paramName
+						.substring(7, paramName.length());
+				
+				qName=qName.replaceAll("!", "#");
+				criteria.createAlias("extensionMaps.extensionMapList", "extMapListExist");
+				ReaderUtility.extensionHierarchCriteria_EQ_qName(criteria,qName,"extMapListExist",false);
+			}
+		}
+		/**
+		 * Like EXISTS_fieldname as described above, but includes events that 
+		 * have a non-empty inner extension field named fieldname .
+		 * Note that the value for this query parameter is ignored.
+		 */
+		if(paramName.startsWith("EXISTS_INNER_")){
+			if(!paramName.startsWith("EXISTS_INNER_ILMD_")&&
+					!paramName.startsWith("EXISTS_INNER_ERROR_")){
+				String qName = paramName
+						.substring(13, paramName.length());
+				
+				qName=qName.replaceAll("!", "#");
+				criteria.createAlias("extensionMaps.extensionMapList", "extMapListExistInner");
+				ReaderUtility.extensionHierarchCriteria_EQ_qName(criteria,qName,"extMapListExistInner",true);
+			}
+		}
+		
+		/**
+		 *Like EXISTS_fieldname as described above, but events that have a
+		 *non-empty field named fieldname in the ILMD area (Section 7.3.6).
+		 *Fieldname is constructed as for EQ_ILMD_fieldname .
+		 *Note that the value for this query parameter is ignored. 
+		 */
+		if(paramName.startsWith("EXISTS_ILMD_")){
+			String qName = paramName
+					.substring(12, paramName.length());
+			
+			qName=qName.replaceAll("!", "#");
+			
+			
+			String alias="";
+			if (eventType.equals("TransformationEvent")
+					|| eventType.equals("ObjectEvent")) {
+				if(eventType.equals("TransformationEvent")){
+					criteria.createAlias("ilmd.extensionMaps", "ilextmapExistIlmd");
+					criteria.createAlias("ilextmapExistIlmd.extensionMapList", "ilextmapExistIlmdList");
+					alias="ilextmapExistIlmdList";
+				}else if(eventType.equals("ObjectEvent")){
+					
+					criteria.createAlias("extension.ilmd", "exIlExistIlmd");
+					criteria.createAlias("exIlExistIlmd.extensionMaps", "extMapExistIlmd");
+					criteria.createAlias("extMapExistIlmd.extensionMapList", "extMapListExistIlmd");
+					alias="extMapListExistIlmd";
+				}
+				ReaderUtility.extensionHierarchCriteria_EQ_qName(criteria,qName,alias,false);
+			}
+			
+		}
+		/**
+		 * Like EXISTS_ILMD_fieldname as described above, but includes
+		 * events that have a non-empty inner extension field named fieldname
+		 * within the ILMD area.
+		 * Note that the value for this query parameter is ignored.
+		 */
+		if(paramName.startsWith("EXISTS_INNER_ILMD_")){
+			String qName = paramName
+					.substring(18, paramName.length());
+			
+			qName=qName.replaceAll("!", "#");
+			
+			
+			String alias="";
+			if (eventType.equals("TransformationEvent")
+					|| eventType.equals("ObjectEvent")) {
+				if(eventType.equals("TransformationEvent")){
+					criteria.createAlias("ilmd.extensionMaps", "ilextmapExistInnIlmd");
+					criteria.createAlias("ilextmapExistInnIlmd.extensionMapList", "ilextmapExistInnIlmdList");
+					alias="ilextmapExistInnIlmdList";
+				}else if(eventType.equals("ObjectEvent")){
+					
+					criteria.createAlias("extension.ilmd", "exIlExistInnIlmd");
+					criteria.createAlias("exIlExistInnIlmd.extensionMaps", "extMapExistInnIlmd");
+					criteria.createAlias("extMapExistInnIlmd.extensionMapList", "extMapListExistInnIlmd");
+					alias="extMapListExistInnIlmd";
+				}
+				ReaderUtility.extensionHierarchCriteria_EQ_qName(criteria,qName,alias,true);
+			}
+			
+		}
+		/**
+		 * This is not a single parameter, but a family of parameters.If a parameter of this form is specified, 
+		 * the result will only include events that (a) have a field named fieldname whose type is a vocabulary 
+		 * type; and (b) where the value of that field is a vocabulary element for which master data is available; 
+		 * and (c) the master data has a non-null attribute whose name matches one of the values specified in this 
+		 * parameter. Fieldname is the fully qualified name of a field. For a standard field, this is simply the 
+		 * field name; e.g., bizLocation . For an extension field, the name of an extension field is an XML qname; 
+		 * that is, a pair consisting of an XML namespace URI and a name. The name of the corresponding query 
+		 * parameter is constructed by concatenating the following: the string HASATTR_ , the namespace URI for 
+		 * the extension field, a pound sign (#), and the name of the extension field.
+		 */
+		
+		
 		if (paramName.startsWith("HASATTR_")){
 			
 		}
+		
+		/**
+		 * Analogous to EQ_fieldname , but matches events containing an 
+		 * ErrorDeclaration and where the ErrorDeclaration contains a
+		 * field having the specified fieldname whose value matches one of the
+		 * specified values.
+		 */
+		if(paramName.startsWith("EQ_ERROR_DECLARATION_")){
+			String qName = paramName
+					.substring(21, paramName.length());
 			
+			List<String> value=MysqlQueryUtil.getStringList(paramValues);
 			
+			qName=qName.replaceAll("!", "#");
+			List<PairType> ValueTypeList=new ArrayList<PairType>();
+			ReaderUtility.getValueTypeList(ValueTypeList,value);
 			
+			criteria.createAlias("baseExtension", "baExtEventIDeqErDec");
+			criteria.createAlias("baExtEventIDeqErDec.errorDeclaration", "baExtEventIDDeceqErDec");
+			criteria.createAlias("baExtEventIDDeceqErDec.extensionMaps", "extMapsEqErDec");			
+			criteria.createAlias("extMapsEqErDec.extensionMapList", "extMapsListEqErDec");
+			ReaderUtility.extensionHierarchCriteria_EQ(criteria,ValueTypeList,qName,"extMapsListEqErDec",false);
+		}
+		/**
+		 * Analogous to EQ_fieldname , GT_fieldname , GE_fieldname ,
+		 * GE_fieldname , LT_fieldname , and LE_fieldname , respectively,
+		 * but matches events containing an ErrorDeclaration and where the
+		 * ErrorDeclaration contains a field having the specified fieldname
+		 * whose integer, float, or time value matches the specified value
+		 * according to the specified relational operator.
+		 */
+		if(paramName.startsWith("GT_ERROR_DECLARATION_")||
+				paramName.startsWith("GE_ERROR_DECLARATION_")||
+				paramName.startsWith("LT_ERROR_DECLARATION_")||
+				paramName.startsWith("LE_ERROR_DECLARATION_")){
+			
+			String qName = paramName
+					.substring(21, paramName.length());
+			List<String> value=MysqlQueryUtil.getStringList(paramValues);
+			
+			qName=qName.replaceAll("!", "#");
+			List<PairType> ValueTypeList=new ArrayList<PairType>();
+			ReaderUtility.getValueTypeList(ValueTypeList,value);
+			
+			criteria.createAlias("baseExtension", "baExtEventIDNeqErDec");
+			criteria.createAlias("baExtEventIDNeqErDec.errorDeclaration", "baExtEventIDDecNeqErDec");
+			criteria.createAlias("baExtEventIDDecNeqErDec.extensionMaps", "extMapsNeqErDec");			
+			criteria.createAlias("extMapsNeqErDec.extensionMapList", "extMapsListNeqErDec");
+			
+			if (paramName.startsWith("GT_")) {
+				ReaderUtility.extensionHierarchCriteria_GT(criteria,ValueTypeList,qName,"extMapsListNeqErDec",false);
+			}else if (paramName.startsWith("GE_")){
+				ReaderUtility.extensionHierarchCriteria_GE(criteria,ValueTypeList,qName,"extMapsListNeqErDec",false);
+			}else if (paramName.startsWith("LT_")){
+				ReaderUtility.extensionHierarchCriteria_LT(criteria,ValueTypeList,qName,"extMapsListNeqErDec",false);
+			}else if (paramName.startsWith("LE_")){
+				ReaderUtility.extensionHierarchCriteria_LE(criteria,ValueTypeList,qName,"extMapsListNeqErDec",false);
+			}
+		}
+		/**
+		 * Analogous to EQ_ERROR_DECLARATION_fieldname , but matches
+		 * inner extension elements; that is, any XML element nested within a
+		 * top-level extension element. Note that a matching inner element may
+		 * exist within more than one top-level element or may occur more than
+		 * once within a single top-level element; this parameter matches if at
+		 * least one matching occurrence is found anywhere in the event (except at top-level)..
+		 */
+		if(paramName.startsWith("EQ_INNER_ERROR_DECLARATION_")){
+			String qName = paramName
+					.substring(27, paramName.length());
+			
+			List<String> value=MysqlQueryUtil.getStringList(paramValues);
+			
+			qName=qName.replaceAll("!", "#");
+			List<PairType> ValueTypeList=new ArrayList<PairType>();
+			ReaderUtility.getValueTypeList(ValueTypeList,value);
+			
+			criteria.createAlias("baseExtension", "baExtEventIDeqInnErDec");
+			criteria.createAlias("baExtEventIDeqInnErDec.errorDeclaration", "baExtEventIDDeceqInnErDec");
+			criteria.createAlias("baExtEventIDDeceqInnErDec.extensionMaps", "extMapsEqInnErDec");			
+			criteria.createAlias("extMapsEqInnErDec.extensionMapList", "extMapsListEqInnErDec");
+			ReaderUtility.extensionHierarchCriteria_EQ(criteria,ValueTypeList,qName,"extMapsListEqInnErDec",true);
+		}
+		
+		/**
+		 * Like EQ_INNER_ERROR_DECLARATION _ fieldname as described
+		 * above, but may be applied to a field of type Int, Float, or Time.
+		 */
+		if(paramName.startsWith("GT_INNER_ERROR_DECLARATION_")||
+				paramName.startsWith("GE_INNER_ERROR_DECLARATION_")||
+				paramName.startsWith("LT_INNER_ERROR_DECLARATION_")||
+				paramName.startsWith("LE_INNER_ERROR_DECLARATION_")){
+			String qName = paramName
+					.substring(27, paramName.length());
+			
+			List<String> value=MysqlQueryUtil.getStringList(paramValues);
+			
+			qName=qName.replaceAll("!", "#");
+			List<PairType> ValueTypeList=new ArrayList<PairType>();
+			ReaderUtility.getValueTypeList(ValueTypeList,value);
+			
+			criteria.createAlias("baseExtension", "baExtEventIDNeqInnErDec");
+			criteria.createAlias("baExtEventIDNeqInnErDec.errorDeclaration", "baExtEventIDDecNeqInnErDec");
+			criteria.createAlias("baExtEventIDDecNeqInnErDec.extensionMaps", "extMapsNeqInnErDec");			
+			criteria.createAlias("extMapsNeqInnErDec.extensionMapList", "extMapsListNeqInnErDec");
+			
+			if (paramName.startsWith("GT_")) {
+				ReaderUtility.extensionHierarchCriteria_GT(criteria,ValueTypeList,qName,"extMapsListNeqInnErDec",true);
+			}else if (paramName.startsWith("GE_")){
+				ReaderUtility.extensionHierarchCriteria_GE(criteria,ValueTypeList,qName,"extMapsListNeqInnErDec",true);
+			}else if (paramName.startsWith("LT_")){
+				ReaderUtility.extensionHierarchCriteria_LT(criteria,ValueTypeList,qName,"extMapsListNeqInnErDec",true);
+			}else if (paramName.startsWith("LE_")){
+				ReaderUtility.extensionHierarchCriteria_LE(criteria,ValueTypeList,qName,"extMapsListNeqInnErDec",true);
+			}
+		}
+		/**
+		 * Like EXISTS_fieldname as described above, but events that have an
+		 * error declaration containing a non-empty extension field named
+		 * fieldname .
+		 * Fieldname is constructed as for EQ_ERROR_DECLARATION_fieldname .
+		 * Note that the value for this query parameter is ignored
+		 */
+		if(paramName.startsWith("EXISTS_ERROR_DECLARATION_")){
+			String qName = paramName
+					.substring(25, paramName.length());
+			
+			List<String> value=MysqlQueryUtil.getStringList(paramValues);
+			
+			qName=qName.replaceAll("!", "#");
+			List<PairType> ValueTypeList=new ArrayList<PairType>();
+			ReaderUtility.getValueTypeList(ValueTypeList,value);
+			
+			criteria.createAlias("baseExtension", "baExtEventIDexiErDec");
+			criteria.createAlias("baExtEventIDexiErDec.errorDeclaration", "baExtEventIDDecExiErDec");
+			criteria.createAlias("baExtEventIDDecExiErDec.extensionMaps", "extMapsExiErDec");			
+			criteria.createAlias("extMapsExiErDec.extensionMapList", "extMapsListExiErDec");
+			ReaderUtility.extensionHierarchCriteria_EQ_qName(criteria,qName,"extMapsListExiErDec",false);
+		}
+		/**
+		 * Like EXISTS_ERROR_DECLARATION_fieldname as described above,
+		 * but includes events that have an error declaration containing a non-
+		 * empty inner extension field named fieldname .
+		 * Note that the value for this query parameter is ignored.
+		 */
+		if(paramName.startsWith("EXISTS_INNER_ERROR_DECLARATION_")){
+			String qName = paramName
+					.substring(31, paramName.length());
+			
+			List<String> value=MysqlQueryUtil.getStringList(paramValues);
+			
+			qName=qName.replaceAll("!", "#");
+			List<PairType> ValueTypeList=new ArrayList<PairType>();
+			ReaderUtility.getValueTypeList(ValueTypeList,value);
+			
+			criteria.createAlias("baseExtension", "baExtEventIDexiINNErDec");
+			criteria.createAlias("baExtEventIDexiINNErDec.errorDeclaration", "baExtEventIDDecExiINNErDec");
+			criteria.createAlias("baExtEventIDDecExiINNErDec.extensionMaps", "extMapsExiINNErDec");			
+			criteria.createAlias("extMapsExiINNErDec.extensionMapList", "extMapsListExiINNErDec");
+			ReaderUtility.extensionHierarchCriteria_EQ_qName(criteria,qName,"extMapsListExiINNErDec",true);
+		}
+		
+		
+			
+		//---------------------------	
 		}//end of if isExtraParam
 	}	//end of while loop
 		/**
@@ -1356,6 +1848,15 @@ boolean isExtraParameter(String paramName) {
 		return false;
 	if (paramName.contains("transformationID"))
 		return false;
+	if (paramName.contains("eventID"))
+		return false;
+	if (paramName.contains("errorReason"))
+		return false;
+	if (paramName.contains("errorDeclarationTime"))
+		return false;
+	if (paramName.contains("correctiveEventID"))
+		return false;
+	
 	return true;
 }
 }

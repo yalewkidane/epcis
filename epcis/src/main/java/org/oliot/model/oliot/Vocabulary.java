@@ -75,6 +75,11 @@ public class Vocabulary {
     @OneToOne
 	@JoinColumn(name="vocabularyExtension_id")
 	protected VocabularyExtension extension;
+    
+    @OneToOne
+    @JoinColumn(name="baseExtensionMaps_id")
+    protected ExtensionMaps extensionMaps;
+    
     @Transient 
 	@XmlAnyElement(lax = true)
 	protected List<Object> any;
@@ -202,6 +207,14 @@ public class Vocabulary {
 	 */
 	public Map<QName, String> getOtherAttributes() {
 		return otherAttributes;
+	}
+
+	public ExtensionMaps getExtensionMaps() {
+		return extensionMaps;
+	}
+
+	public void setExtensionMaps(ExtensionMaps extensionMaps) {
+		this.extensionMaps = extensionMaps;
 	}
 
 }

@@ -17,12 +17,13 @@ import java.util.List;
 import javax.xml.bind.JAXBElement;
 
 import org.oliot.epcis.configuration.Configuration;
-import org.oliot.epcis.serde.mongodb.MasterDataWriteConverter;
-import org.oliot.epcis.service.capture.mongodb.MongoCaptureUtil;
+//import org.oliot.epcis.service.capture.mongodb.MongoCaptureUtil;
 import org.oliot.epcis.service.capture.mysql.MysqlCaptureUtil;
+import org.oliot.gcp.core.SimplePureIdentityFilter;
 import org.oliot.model.epcis.ActionType;
 import org.oliot.model.epcis.AggregationEventType;
 import org.oliot.model.epcis.EPCISDocumentType;
+import org.oliot.model.epcis.EPCISEventListExtensionType;
 import org.oliot.model.epcis.EPCISMasterDataDocumentType;
 import org.oliot.model.epcis.EventListType;
 import org.oliot.model.epcis.ObjectEventType;
@@ -32,16 +33,13 @@ import org.oliot.model.epcis.TransformationEventType;
 import org.oliot.model.epcis.VocabularyElementType;
 import org.oliot.model.epcis.VocabularyListType;
 import org.oliot.model.epcis.VocabularyType;
-import org.oliot.tdt.SimplePureIdentityFilter;
 
 /**
- * Copyright (C) 2014 Jaewook Byun
+ * Copyright (C) 2014-2016 Jaewook Byun
  *
- * This project is part of Oliot (oliot.org), pursuing the implementation of
- * Electronic Product Code Information Service(EPCIS) v1.1 specification in
- * EPCglobal.
- * [http://www.gs1.org/gsmp/kc/epcglobal/epcis/epcis_1_1-standard-20140520.pdf]
- * 
+ * This project is part of Oliot open source (http://oliot.org). Oliot EPCIS
+ * v1.2.x is Java Web Service complying with Electronic Product Code Information
+ * Service (EPCIS) v1.2.
  *
  * @author Jaewook Jack Byun, Ph.D student
  * 
@@ -54,26 +52,26 @@ import org.oliot.tdt.SimplePureIdentityFilter;
 
 public class CaptureService implements CoreCaptureService {
 
-	public void capture(AggregationEventType event, String userID, String accessModifier, Integer gcpLength) {
+	public String capture(AggregationEventType event, String userID, String accessModifier, Integer gcpLength) {
 
 		// General Exception Handling
 		// M7
 		String timeZone = event.getEventTimeZoneOffset();
 		if (!CaptureUtil.isCorrectTimeZone(timeZone)) {
 			Configuration.logger.error("Req. M7 Error");
-			return;
+			return "[Error] Req. M7 Error";
 		}
 
 		// Mandatory Field: Action
 		if (event.getAction() == null) {
 			Configuration.logger.error("Aggregation Event should have 'Action' field ");
-			return;
+			return "[Error] Aggregation Event should have 'Action' field ";
 		}
 		// M13
 		if (event.getAction() == ActionType.ADD || event.getAction() == ActionType.DELETE) {
 			if (event.getParentID() == null) {
 				Configuration.logger.error("Req. M13 Error");
-				return;
+				return "[Error] Req. M13 Error";
 			}
 		}
 		// M10
@@ -82,65 +80,61 @@ public class CaptureService implements CoreCaptureService {
 
 			if (SimplePureIdentityFilter.isPureIdentity(parentID) == false) {
 				Configuration.logger.error("Req. M10 Error");
-				return;
+				return "[Error] Req. M10 Error";
 			}
 		}
 
-		if (Configuration.backend.equals("MongoDB")) {
-			MongoCaptureUtil m = new MongoCaptureUtil();
-			m.capture(event, userID, accessModifier, gcpLength);
-		}else if(Configuration.backend.equals("MySQL")){
-			MysqlCaptureUtil m = new MysqlCaptureUtil();
-			m.capture(event);
-		}
+		//MongoCaptureUtil m = new MongoCaptureUtil();
+		//return m.capture(event, userID, accessModifier, gcpLength);
+		
+		MysqlCaptureUtil m = new MysqlCaptureUtil();
+		m.capture(event);
+		return null;
 	}
 
-	public void capture(ObjectEventType event, String userID, String accessModifier, Integer gcpLength) {
+	public String capture(ObjectEventType event, String userID, String accessModifier, Integer gcpLength) {
 
 		// General Exception Handling
 		// M7
 		String timeZone = event.getEventTimeZoneOffset();
 		if (!CaptureUtil.isCorrectTimeZone(timeZone)) {
 			Configuration.logger.error("Req. M7 Error");
-			return;
+			return "[Error] Req. M7 Error";
 		}
-
-		if (Configuration.backend.equals("MongoDB")) {
-			MongoCaptureUtil m = new MongoCaptureUtil();
-			m.capture(event, userID, accessModifier, gcpLength);
-		}else if(Configuration.backend.equals("MySQL")){
-			MysqlCaptureUtil m = new MysqlCaptureUtil();
-			m.capture(event);
-		}
+		Configuration.logger.info("Objec event capturing started");
+		//MongoCaptureUtil m = new MongoCaptureUtil();
+		//return m.capture(event, userID, accessModifier, gcpLength);
+		MysqlCaptureUtil m = new MysqlCaptureUtil();
+		m.capture(event);
+		return null;
 	}
 
-	public void capture(QuantityEventType event, String userID, String accessModifier, Integer gcpLength) {
+	public String capture(QuantityEventType event, String userID, String accessModifier, Integer gcpLength) {
 
 		// General Exception Handling
 		// M7
 		String timeZone = event.getEventTimeZoneOffset();
 		if (!CaptureUtil.isCorrectTimeZone(timeZone)) {
 			Configuration.logger.error("Req. M7 Error");
-			return;
+			return "[Error] Req. M7 Error";
 		}
 
-		if (Configuration.backend.equals("MongoDB")) {
-			MongoCaptureUtil m = new MongoCaptureUtil();
-			m.capture(event, userID, accessModifier, gcpLength);
-		}else if(Configuration.backend.equals("MySQL")){
-			MysqlCaptureUtil m = new MysqlCaptureUtil();
-			m.capture(event);
-		}
+		//MongoCaptureUtil m = new MongoCaptureUtil();
+		//return m.capture(event, userID, accessModifier, gcpLength);
+		Configuration.logger.info("Quantity event capturing started");
+		MysqlCaptureUtil m = new MysqlCaptureUtil();
+		m.capture(event);
+		return null;
 	}
 
-	public void capture(TransactionEventType event, String userID, String accessModifier, Integer gcpLength) {
+	public String capture(TransactionEventType event, String userID, String accessModifier, Integer gcpLength) {
 
 		// General Exception Handling
 		// M7
 		String timeZone = event.getEventTimeZoneOffset();
 		if (!CaptureUtil.isCorrectTimeZone(timeZone)) {
 			Configuration.logger.error("Req. M7 Error");
-			return;
+			return "[Error]Req. M7 Error";
 		}
 
 		// M14
@@ -149,53 +143,51 @@ public class CaptureService implements CoreCaptureService {
 
 			if (SimplePureIdentityFilter.isPureIdentity(parentID) == false) {
 				Configuration.logger.error("Req. M14 Error");
-				return;
+				return "Req. M14 Error";
 			}
 		}
 
-		if (Configuration.backend.equals("MongoDB")) {
-			MongoCaptureUtil m = new MongoCaptureUtil();
-			m.capture(event, userID, accessModifier, gcpLength);
-		}else if(Configuration.backend.equals("MySQL")){
-			MysqlCaptureUtil m = new MysqlCaptureUtil();
-			m.capture(event);
-		}
+		//MongoCaptureUtil m = new MongoCaptureUtil();
+		//return m.capture(event, userID, accessModifier, gcpLength);
+		
+		Configuration.logger.info("Transaction event capturing started");
+		MysqlCaptureUtil m = new MysqlCaptureUtil();
+		m.capture(event);
+		return null;
 	}
 
-	public void capture(TransformationEventType event, String userID, String accessModifier, Integer gcpLength) {
+	public String capture(TransformationEventType event, String userID, String accessModifier, Integer gcpLength) {
 		// General Exception Handling
 		// M7
 		String timeZone = event.getEventTimeZoneOffset();
 		if (!CaptureUtil.isCorrectTimeZone(timeZone)) {
 			Configuration.logger.error("Req. M7 Error");
-			return;
+			return "[Error]Req. M7 Error";
 		}
-		if (Configuration.backend.equals("MongoDB")) {
-			MongoCaptureUtil m = new MongoCaptureUtil();
-			m.capture(event, userID, accessModifier, gcpLength);
-		}else if(Configuration.backend.equals("MySQL")){
-			MysqlCaptureUtil m = new MysqlCaptureUtil();
-			m.capture(event);
-		}
+		//MongoCaptureUtil m = new MongoCaptureUtil();
+		//return m.capture(event, userID, accessModifier, gcpLength);
+		
+		Configuration.logger.info("Transformation event capturing started");
+		MysqlCaptureUtil m = new MysqlCaptureUtil();
+		m.capture(event);
+		return null;
 	}
 
-	public void capture(VocabularyType vocabulary, Integer gcpLength) {
-		if (Configuration.backend.equals("MongoDB")) {
-			// Previous Logic
-			// MongoCaptureUtil m = new MongoCaptureUtil();
-			// m.capture(vocabulary);
-
-			MasterDataWriteConverter mdConverter = new MasterDataWriteConverter();
-			mdConverter.capture(vocabulary, gcpLength);
-		}else if(Configuration.backend.equals("MySQL")){
-			MysqlCaptureUtil m = new MysqlCaptureUtil();
-			m.capture(vocabulary);
-		}
+	public String capture(VocabularyType vocabulary, Integer gcpLength) {
+		// mysql updata here ------   
+		//MongoCaptureUtil m = new MongoCaptureUtil();
+		//return m.capture(vocabulary, null, null, gcpLength);
+		
+		Configuration.logger.info("Vocabulary capturing started");
+		MysqlCaptureUtil m = new MysqlCaptureUtil();
+		m.capture(vocabulary);
+		return null;
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void capture(EPCISDocumentType epcisDocument) {
+		Configuration.logger.info("Implimenting: capture(EPCISDocumentType epcisDocument --- mysql) ");
 		if (epcisDocument.getEPCISBody() == null) {
 			Configuration.logger.info(" There is no DocumentBody ");
 			return;
@@ -232,15 +224,57 @@ public class CaptureService implements CoreCaptureService {
 	}
 
 	@SuppressWarnings("rawtypes")
-	public void capture(EPCISDocumentType epcisDocument, String userID, String accessModifier, Integer gcpLength) {
+	// Return null -> Succeed, not null --> error message
+	public String capture(EPCISDocumentType epcisDocument, String userID, String accessModifier, Integer gcpLength) {
+		Configuration.logger.info("Implimenting: capture(EPCISDocumentType epcisDocument, String userID, String accessModifier, Integer gcpLength ---mysql");
+		String errorMessage = null;
 		if (epcisDocument.getEPCISBody() == null) {
 			Configuration.logger.info(" There is no DocumentBody ");
-			return;
+			return "[ERROR] There is no DocumentBody ";
 		}
 		if (epcisDocument.getEPCISBody().getEventList() == null) {
 			Configuration.logger.info(" There is no EventList ");
-			return;
+			return null;
 		}
+
+		// Master Data in the document
+		if (epcisDocument.getEPCISHeader() != null && epcisDocument.getEPCISHeader().getExtension() != null
+				&& epcisDocument.getEPCISHeader().getExtension().getEPCISMasterData() != null
+				&& epcisDocument.getEPCISHeader().getExtension().getEPCISMasterData().getVocabularyList() != null
+				&& epcisDocument.getEPCISHeader().getExtension().getEPCISMasterData().getVocabularyList()
+						.getVocabulary() != null) {
+			List<VocabularyType> vocabularyTypeList = epcisDocument.getEPCISHeader().getExtension().getEPCISMasterData()
+					.getVocabularyList().getVocabulary();
+
+			for (int i = 0; i < vocabularyTypeList.size(); i++) {
+				VocabularyType vocabulary = vocabularyTypeList.get(i);
+				if (vocabulary.getVocabularyElementList() != null) {
+					if (vocabulary.getVocabularyElementList().getVocabularyElement() != null) {
+						List<VocabularyElementType> vetList = vocabulary.getVocabularyElementList()
+								.getVocabularyElement();
+						List<VocabularyElementType> vetTempList = new ArrayList<VocabularyElementType>();
+						for (int j = 0; j < vetList.size(); j++) {
+							VocabularyElementType vet = vetList.get(j);
+							VocabularyElementType vetTemp = new VocabularyElementType();
+							vetTemp = vet;
+							vetTempList.add(vetTemp);
+						}
+						for (int j = 0; j < vetTempList.size(); j++) {
+							vocabulary.getVocabularyElementList().getVocabularyElement().clear();
+							vocabulary.getVocabularyElementList().getVocabularyElement().add(vetTempList.get(j));
+							String message = capture(vocabulary, gcpLength);
+							if (message != null) {
+								if (errorMessage == null)
+									errorMessage = message + "\n";
+								else
+									errorMessage = errorMessage + message + "\n";
+							}
+						}
+					}
+				}
+			}
+		}
+
 		EventListType eventListType = epcisDocument.getEPCISBody().getEventList();
 		List<Object> eventList = eventListType.getObjectEventOrAggregationEventOrQuantityEvent();
 
@@ -255,17 +289,56 @@ public class CaptureService implements CoreCaptureService {
 			JAXBElement eventElement = (JAXBElement) eventList.get(i);
 			Object event = eventElement.getValue();
 			if (event instanceof ObjectEventType) {
-				capture((ObjectEventType) event, userID, accessModifier, gcpLength);
+				String message = capture((ObjectEventType) event, userID, accessModifier, gcpLength);
+				if (message != null) {
+					if (errorMessage == null)
+						errorMessage = message + "\n";
+					else
+						errorMessage = errorMessage + message + "\n";
+				}
 			} else if (event instanceof AggregationEventType) {
-				capture((AggregationEventType) event, userID, accessModifier, gcpLength);
+				String message = capture((AggregationEventType) event, userID, accessModifier, gcpLength);
+				if (message != null) {
+					if (errorMessage == null)
+						errorMessage = message + "\n";
+					else
+						errorMessage = errorMessage + message + "\n";
+				}
 			} else if (event instanceof TransactionEventType) {
-				capture((TransactionEventType) event, userID, accessModifier, gcpLength);
-			} else if (event instanceof TransformationEventType) {
-				capture((TransformationEventType) event, userID, accessModifier, gcpLength);
-			} else if (event instanceof QuantityEventType) {
-				capture((QuantityEventType) event, userID, accessModifier, gcpLength);
+				String message = capture((TransactionEventType) event, userID, accessModifier, gcpLength);
+				if (message != null) {
+					if (errorMessage == null)
+						errorMessage = message + "\n";
+					else
+						errorMessage = errorMessage + message + "\n";
+				}
+			} /*
+				 * else if (event instanceof TransformationEventType) {
+				 * capture((TransformationEventType) event, userID,
+				 * accessModifier, gcpLength); }
+				 */
+			else if (event instanceof QuantityEventType) {
+				String message = capture((QuantityEventType) event, userID, accessModifier, gcpLength);
+				if (message != null) {
+					if (errorMessage == null)
+						errorMessage = message + "\n";
+					else
+						errorMessage = errorMessage + message + "\n";
+				}
+			} else if (event instanceof EPCISEventListExtensionType) {
+				// TransformationEvent is now included as
+				// EPCISEventListExtensionType
+				String message = capture(((EPCISEventListExtensionType) event).getTransformationEvent(), userID,
+						accessModifier, gcpLength);
+				if (message != null) {
+					if (errorMessage == null)
+						errorMessage = message + "\n";
+					else
+						errorMessage = errorMessage + message + "\n";
+				}
 			}
 		}
+		return errorMessage;
 	}
 
 	@Override
@@ -308,16 +381,17 @@ public class CaptureService implements CoreCaptureService {
 		}
 	}
 
-	public void capture(EPCISMasterDataDocumentType epcisMasterDataDocument, Integer gcpLength) {
-
+	public String capture(EPCISMasterDataDocumentType epcisMasterDataDocument, Integer gcpLength) {
+		Configuration.logger.info("Implimenting: capture(EPCISMasterDataDocumentType epcisMasterDataDocument, Integer gcpLength)");
+		String errorMessage = null;
 		if (epcisMasterDataDocument.getEPCISBody() == null) {
 			Configuration.logger.info(" There is no DocumentBody ");
-			return;
+			return "[ERROR] There is no DocumentBody ";
 		}
 
 		if (epcisMasterDataDocument.getEPCISBody().getVocabularyList() == null) {
 			Configuration.logger.info(" There is no Vocabulary List ");
-			return;
+			return "[ERROR] There is no Vocabulary List ";
 		}
 
 		VocabularyListType vocabularyListType = epcisMasterDataDocument.getEPCISBody().getVocabularyList();
@@ -339,12 +413,17 @@ public class CaptureService implements CoreCaptureService {
 					for (int j = 0; j < vetTempList.size(); j++) {
 						vocabulary.getVocabularyElementList().getVocabularyElement().clear();
 						vocabulary.getVocabularyElementList().getVocabularyElement().add(vetTempList.get(j));
-						capture(vocabulary, gcpLength);
+						String message = capture(vocabulary, gcpLength);
+						if (message != null) {
+							if (errorMessage == null)
+								errorMessage = message + "\n";
+							else
+								errorMessage = errorMessage + message + "\n";
+						}
 					}
 				}
 			}
-
 		}
+		return errorMessage;
 	}
-
 }

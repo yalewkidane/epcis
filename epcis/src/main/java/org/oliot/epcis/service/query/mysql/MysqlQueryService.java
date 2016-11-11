@@ -5,7 +5,9 @@ import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
 import java.io.StringWriter;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -26,6 +28,8 @@ import org.hibernate.Criteria;
 import org.json.JSONArray;
 import org.oliot.epcis.configuration.Configuration;
 import org.oliot.epcis.serde.mysql.EventToEventTypeConverter;
+import org.oliot.epcis.service.subscription.MysqlSubscription;
+import org.oliot.epcis.service.subscription.MysqlSubscriptionTask;
 import org.oliot.model.epcis.AggregationEventType;
 import org.oliot.model.epcis.EPCISQueryBodyType;
 import org.oliot.model.epcis.EPCISQueryDocumentType;
@@ -50,8 +54,10 @@ import org.oliot.model.epcis.VocabularyType;
 import org.oliot.model.oliot.AggregationEvent;
 import org.oliot.model.oliot.Attribute;
 import org.oliot.model.oliot.ObjectEvent;
+import org.oliot.model.oliot.PollParameters;
 import org.oliot.model.oliot.QuantityElement;
 import org.oliot.model.oliot.QuantityEvent;
+import org.oliot.model.oliot.Subscription;
 import org.oliot.model.oliot.TransactionEvent;
 import org.oliot.model.oliot.TransformationEvent;
 import org.oliot.model.oliot.Vocabulary;
@@ -64,6 +70,7 @@ import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.web.bind.annotation.PathVariable;
 
+
 import static org.quartz.TriggerKey.*;
 import static org.quartz.JobKey.*;
 
@@ -72,44 +79,54 @@ import static org.quartz.JobKey.*;
 public class MysqlQueryService {
 
 	public String subscribe(SubscriptionType subscription) {
-		String queryName = subscription.getQueryName();
+		
+		
+		String queryName = subscription.getPollParameters().getQueryName();
 		String subscriptionID = subscription.getSubscriptionID();
 		String dest = subscription.getDest();
-		String cronExpression = subscription.getCronExpression();
-		boolean reportIfEmpty = subscription.isReportIfEmpty();
+		String cronExpression ="";// subscription.getPollParameters().getCronExpression();
+		boolean reportIfEmpty = subscription.getReportIfEmpty();
 		String initialRecordTime = subscription.getInitialRecordTime();
-		String eventType = subscription.getEventType();
-		String GE_eventTime = subscription.getGE_eventTime();
-		String LT_eventTime = subscription.getLT_eventTime();
-		String GE_recordTime = subscription.getGE_recordTime();
-		String LT_recordTime = subscription.getLT_recordTime();
-		String EQ_action = subscription.getEQ_action();
-		String EQ_bizStep = subscription.getEQ_bizStep();
-		String EQ_disposition = subscription.getEQ_disposition();
-		String EQ_readPoint = subscription.getEQ_readPoint();
-		String WD_readPoint = subscription.getWD_readPoint();
-		String EQ_bizLocation = subscription.getEQ_bizLocation();
-		String WD_bizLocation = subscription.getWD_bizLocation();
-		String EQ_transformationID = subscription.getEQ_transformationID();
-		String MATCH_epc = subscription.getMATCH_epc();
-		String MATCH_parentID = subscription.getMATCH_parentID();
-		String MATCH_inputEPC = subscription.getMATCH_inputEPC();
-		String MATCH_outputEPC = subscription.getMATCH_outputEPC();
-		String MATCH_anyEPC = subscription.getMATCH_anyEPC();
-		String MATCH_epcClass = subscription.getMATCH_epcClass();
-		String MATCH_inputEPCClass = subscription.getMATCH_inputEPCClass();
-		String MATCH_outputEPCClass = subscription.getMATCH_outputEPCClass();
-		String MATCH_anyEPCClass = subscription.getMATCH_anyEPCClass();
-		String EQ_quantity = subscription.getEQ_quantity();
-		String GT_quantity = subscription.getGT_quantity();
-		String GE_quantity = subscription.getGE_quantity();
-		String LT_quantity = subscription.getLT_quantity();
-		String LE_quantity = subscription.getLE_quantity();
-		String orderBy = subscription.getOrderBy();
-		String orderDirection = subscription.getOrderDirection();
-		String eventCountLimit = subscription.getEventCountLimit();
-		String maxEventCount = subscription.getMaxEventCount();
-		Map<String, String> paramMap = subscription.getParamMap();
+		String eventType = subscription.getPollParameters().getEventType();
+		String GE_eventTime = subscription.getPollParameters().getGE_eventTime();
+		String LT_eventTime = subscription.getPollParameters().getLT_eventTime();
+		String GE_recordTime = subscription.getPollParameters().getGE_recordTime();
+		String LT_recordTime = subscription.getPollParameters().getLT_recordTime();
+		String EQ_action = subscription.getPollParameters().getEQ_action();
+		String EQ_bizStep = subscription.getPollParameters().getEQ_bizStep();
+		String EQ_disposition = subscription.getPollParameters().getEQ_disposition();
+		String EQ_readPoint = subscription.getPollParameters().getEQ_readPoint();
+		String WD_readPoint = subscription.getPollParameters().getWD_readPoint();
+		String EQ_bizLocation = subscription.getPollParameters().getEQ_bizLocation();
+		String WD_bizLocation = subscription.getPollParameters().getWD_bizLocation();
+		String EQ_transformationID = subscription.getPollParameters().getEQ_transformationID();
+		String MATCH_epc = subscription.getPollParameters().getMATCH_epc();
+		String MATCH_parentID = subscription.getPollParameters().getMATCH_parentID();
+		String MATCH_inputEPC = subscription.getPollParameters().getMATCH_inputEPC();
+		String MATCH_outputEPC = subscription.getPollParameters().getMATCH_outputEPC();
+		String MATCH_anyEPC = subscription.getPollParameters().getMATCH_anyEPC();
+		String MATCH_epcClass = subscription.getPollParameters().getMATCH_epcClass();
+		String MATCH_inputEPCClass = subscription.getPollParameters().getMATCH_inputEPCClass();
+		String MATCH_outputEPCClass = subscription.getPollParameters().getMATCH_outputEPCClass();
+		String MATCH_anyEPCClass = subscription.getPollParameters().getMATCH_anyEPCClass();
+		String EQ_quantity = subscription.getPollParameters().getEQ_quantity().toString();
+		String GT_quantity = subscription.getPollParameters().getGT_quantity().toString();
+		String GE_quantity = subscription.getPollParameters().getGE_quantity().toString();
+		String LT_quantity = subscription.getPollParameters().getLT_quantity().toString();
+		String LE_quantity = subscription.getPollParameters().getLE_quantity().toString();
+		
+		String EQ_eventID= subscription.getPollParameters().getEQ_eventID(); 
+		boolean EXISTS_errorDeclaration= subscription.getPollParameters().getEXISTS_errorDeclaration();
+		String GE_errorDeclarationTime= subscription.getPollParameters().getGE_errorDeclarationTime();
+		String LT_errorDeclarationTime= subscription.getPollParameters().getLT_errorDeclarationTime();
+		String EQ_errorReason= subscription.getPollParameters().getEQ_errorReason();
+		String EQ_correctiveEventID= subscription.getPollParameters().getEQ_correctiveEventID();
+		
+		String orderBy = subscription.getPollParameters().getOrderBy();
+		String orderDirection = subscription.getPollParameters().getOrderDirection();
+		String eventCountLimit = subscription.getPollParameters().getEventCountLimit().toString();
+		String maxEventCount = subscription.getPollParameters().getMaxEventCount().toString();
+		Map<String, String> paramMap = subscription.getPollParameters().getParams();
 
 		String result = subscribe(queryName, subscriptionID, dest,
 				cronExpression, reportIfEmpty, initialRecordTime, eventType,
@@ -119,11 +136,14 @@ public class MysqlQueryService {
 				EQ_transformationID, MATCH_epc, MATCH_parentID, MATCH_inputEPC,
 				MATCH_outputEPC, MATCH_anyEPC, MATCH_epcClass,
 				MATCH_inputEPCClass, MATCH_outputEPCClass, MATCH_anyEPCClass,
-				EQ_quantity, GT_quantity, GE_quantity, LT_quantity,
-				LE_quantity, orderBy, orderDirection, eventCountLimit,
+				EQ_quantity, GT_quantity, GE_quantity, LT_quantity,	LE_quantity, 
+				EQ_eventID, EXISTS_errorDeclaration,GE_errorDeclarationTime,
+				LT_errorDeclarationTime, EQ_errorReason, EQ_correctiveEventID,
+				orderBy, orderDirection, eventCountLimit,
 				maxEventCount, paramMap);
 
 		return result;
+	
 	}
 
 	public String subscribeEventQuery(String queryName, String subscriptionID,
@@ -138,6 +158,8 @@ public class MysqlQueryService {
 			String MATCH_inputEPCClass, String MATCH_outputEPCClass,
 			String MATCH_anyEPCClass, String EQ_quantity, String GT_quantity,
 			String GE_quantity, String LT_quantity, String LE_quantity,
+			String EQ_eventID, boolean EXISTS_errorDeclaration,String GE_errorDeclarationTime,
+			String LT_errorDeclarationTime, String EQ_errorReason, String EQ_correctiveEventID,
 			String orderBy, String orderDirection, String eventCountLimit,
 			String maxEventCount, Map<String, String> paramMap) {
 
@@ -153,8 +175,10 @@ public class MysqlQueryService {
 				EQ_transformationID, MATCH_epc, MATCH_parentID, MATCH_inputEPC,
 				MATCH_outputEPC, MATCH_anyEPC, MATCH_epcClass,
 				MATCH_inputEPCClass, MATCH_outputEPCClass, MATCH_anyEPCClass,
-				EQ_quantity, GT_quantity, GE_quantity, LT_quantity,
-				LE_quantity, orderBy, orderDirection, eventCountLimit,
+				EQ_quantity, GT_quantity, GE_quantity, LT_quantity,LE_quantity, 
+				EQ_eventID, EXISTS_errorDeclaration,GE_errorDeclarationTime,
+				LT_errorDeclarationTime, EQ_errorReason, EQ_correctiveEventID,
+				orderBy, orderDirection, eventCountLimit,
 				maxEventCount, paramMap);
 		if (reason != null) {
 			return makeErrorResult(reason, QueryParameterException.class);
@@ -235,6 +259,14 @@ public class MysqlQueryService {
 		String GE_quantity = null;
 		String LT_quantity = null;
 		String LE_quantity = null;
+		
+		String EQ_eventID= null; 
+		String EXISTS_errorDeclaration = null;
+		String GE_errorDeclarationTime= null;
+		String LT_errorDeclarationTime= null;
+		String EQ_errorReason= null;
+		String EQ_correctiveEventID= null;
+		
 		String orderBy = null;
 		String orderDirection = null;
 		String eventCountLimit = null;
@@ -341,7 +373,25 @@ public class MysqlQueryService {
 			} else if (name.equals("LE_quantity")) {
 				LE_quantity = value;
 				continue;
-			} else if (name.equals("orderBy")) {
+			}else if (name.equals("EQ_eventID")) {
+				EQ_eventID = value;
+				continue;
+			}else if (name.equals("EXISTS_errorDeclaration")) {
+				EXISTS_errorDeclaration = value;
+				continue;
+			}else if (name.equals("GE_errorDeclarationTime")) {
+				GE_errorDeclarationTime = value;
+				continue;
+			}else if (name.equals("LT_errorDeclarationTime")) {
+				LT_errorDeclarationTime = value;
+				continue;
+			}else if (name.equals("EQ_errorReason")) {
+				EQ_errorReason = value;
+				continue;
+			}else if (name.equals("EQ_correctiveEventID")) {
+				EQ_correctiveEventID = value;
+				continue;
+			}else if (name.equals("orderBy")) {
 				orderBy = value;
 				continue;
 			} else if (name.equals("orderDirection")) {
@@ -408,11 +458,61 @@ public class MysqlQueryService {
 				MATCH_parentID, MATCH_inputEPC, MATCH_outputEPC, MATCH_anyEPC,
 				MATCH_epcClass, MATCH_inputEPCClass, MATCH_outputEPCClass,
 				MATCH_anyEPCClass, EQ_quantity, GT_quantity, GE_quantity,
-				LT_quantity, LE_quantity, orderBy, orderDirection,
+				LT_quantity, LE_quantity, 
+				EQ_eventID,  Boolean.parseBoolean(EXISTS_errorDeclaration), GE_errorDeclarationTime,
+				 LT_errorDeclarationTime,  EQ_errorReason,  EQ_correctiveEventID,
+				orderBy, orderDirection,
 				eventCountLimit, maxEventCount, extMap);
 
 	}
 
+	public String subscribe(Subscription s,String userID, List<String> friendList) throws QueryParameterException,SubscriptionControlsException, InvalidURIException, SubscribeNotPermittedException {
+	// M20 : Throw an InvalidURIException for an incorrect dest argument in
+	// the subscribe method in EPCIS Query Control Interface
+	try {
+		new URL(s.getDest());
+	} catch (MalformedURLException e) {
+		throw new InvalidURIException();
+		// return makeErrorResult(e.toString(), InvalidURIException.class);
+	}
+
+	// M24 : Virtual Error Handling
+	// Automatically processed by URI param
+	// v1.2 not work
+	if (s.getDest() == null) {
+		throw new QueryParameterException();
+		// return makeErrorResult("Fill the mandatory field in subscribe
+		// method", QueryParameterException.class);
+	}
+
+	// M46
+	if (s.getPollParametrs().getQueryName().equals("SimpleMasterDataQuery")) {
+		throw new SubscribeNotPermittedException();
+		// return makeErrorResult("SimpleMasterDataQuery is not available in
+		// subscription method", SubscribeNotPermittedException.class);
+	}
+
+	String retString = "";
+	if (s.getPollParametrs().getQueryName().equals("SimpleEventQuery")) {
+		//retString = subscribeEventQuery(s, userID, friendList);
+		
+		PollParameters p=s.getPollParametrs();
+		retString =subscribe(p.getQueryName(), s.getSubscriptionID(), s.getDest(), "cronExpression",s.getReportIfEmpty(), 
+				s.getInitialRecordTime(), p.getEventType(), p.getGE_eventTime(), 
+				p.getLT_eventTime(), p.getGE_recordTime(), p.getLT_recordTime(), 
+				p.getEQ_action(),	p.getEQ_bizStep(), p.getEQ_disposition(), p.getEQ_readPoint(), 
+				p.getWD_readPoint(), p.getEQ_bizLocation(), p.getWD_bizLocation(), p.getEQ_transformationID(), 
+				p.getMATCH_epc(), p.getMATCH_parentID(), p.getMATCH_inputEPC(), p.getMATCH_outputEPC(), 
+				p.getMATCH_anyEPC(), p.getMATCH_epcClass(), p.getMATCH_inputEPCClass(), p.getMATCH_outputEPCClass(), 
+				p.getMATCH_anyEPCClass(), p.getEQ_quantity().toString(), p.getGT_quantity().toString(), 
+				p.getGE_quantity().toString(), p.getLT_quantity().toString(), p.getLE_quantity().toString(), p.getEQ_eventID(), 
+				p.getEXISTS_errorDeclaration(), p.getGE_errorDeclarationTime(), p.getLT_errorDeclarationTime(), 
+				p.getEQ_errorReason(), p.getEQ_correctiveEventID(), p.getOrderBy(), p.getOrderDirection(), 
+				p.getEventCountLimit().toString(), p.getMaxEventCount().toString(), p.getParams());
+	}
+
+	return retString;
+}
 	public String subscribe(String queryName, String subscriptionID,
 			String dest, String cronExpression, boolean reportIfEmpty,
 			String initialRecordTimeStr, String eventType, String GE_eventTime,
@@ -425,8 +525,11 @@ public class MysqlQueryService {
 			String MATCH_inputEPCClass, String MATCH_outputEPCClass,
 			String MATCH_anyEPCClass, String EQ_quantity, String GT_quantity,
 			String GE_quantity, String LT_quantity, String LE_quantity,
+			String EQ_eventID, boolean EXISTS_errorDeclaration,String GE_errorDeclarationTime,
+			String LT_errorDeclarationTime, String EQ_errorReason, String EQ_correctiveEventID,
 			String orderBy, String orderDirection, String eventCountLimit,
 			String maxEventCount, Map<String, String> paramMap) {
+		
 		System.out.println(2);
 
 		String retString = "";
@@ -440,7 +543,10 @@ public class MysqlQueryService {
 					MATCH_inputEPC, MATCH_outputEPC, MATCH_anyEPC,
 					MATCH_epcClass, MATCH_inputEPCClass, MATCH_outputEPCClass,
 					MATCH_anyEPCClass, EQ_quantity, GT_quantity, GE_quantity,
-					LT_quantity, LE_quantity, orderBy, orderDirection,
+					LT_quantity, LE_quantity, 
+					 EQ_eventID,  EXISTS_errorDeclaration, GE_errorDeclarationTime,
+					 LT_errorDeclarationTime,  EQ_errorReason,  EQ_correctiveEventID,
+					orderBy, orderDirection,
 					eventCountLimit, maxEventCount, paramMap);;
 		}
 
@@ -448,7 +554,7 @@ public class MysqlQueryService {
 	}
 
 	public void unsubscribe(String subscriptionID) {
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		QueryOprationBackend mysqlOperationdao=ctx.getBean
 				("queryOprationBackend", QueryOprationBackend.class);
 
@@ -469,7 +575,7 @@ public class MysqlQueryService {
 
 	public String getSubscriptionIDsREST(@PathVariable String queryName) {
 
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		QueryOprationBackend mysqlOperationdao=ctx.getBean
 				("queryOprationBackend", QueryOprationBackend.class);
 		List<String> IdList=mysqlOperationdao.find(queryName);
@@ -485,7 +591,7 @@ public class MysqlQueryService {
 	public List<String> getSubscriptionIDs(String queryName) {
 		List<String> retList = new ArrayList<String>();
 				
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		QueryOprationBackend mysqlOperationdao=ctx.getBean
 				("queryOprationBackend", QueryOprationBackend.class);
 		
@@ -509,6 +615,8 @@ public class MysqlQueryService {
 			String MATCH_inputEPCClass, String MATCH_outputEPCClass,
 			String MATCH_anyEPCClass, String EQ_quantity, String GT_quantity,
 			String GE_quantity, String LT_quantity, String LE_quantity,
+			String EQ_eventID, Boolean EXISTS_errorDeclaration, String GE_errorDeclarationTime,
+			String LT_errorDeclarationTime,String EQ_errorReason,String EQ_correctiveEventID,
 			String orderBy, String orderDirection, String eventCountLimit,
 			String maxEventCount, Map<String, String> paramMap) {
 
@@ -521,9 +629,12 @@ public class MysqlQueryService {
 				EQ_transformationID, MATCH_epc, MATCH_parentID, MATCH_inputEPC,
 				MATCH_outputEPC, MATCH_anyEPC, MATCH_epcClass,
 				MATCH_inputEPCClass, MATCH_outputEPCClass, MATCH_anyEPCClass,
-				EQ_quantity, GT_quantity, GE_quantity, LT_quantity,
-				LE_quantity, orderBy, orderDirection, eventCountLimit,
+				EQ_quantity, GT_quantity, GE_quantity, LT_quantity,LE_quantity, 
+				EQ_eventID, EXISTS_errorDeclaration,GE_errorDeclarationTime,
+				LT_errorDeclarationTime, EQ_errorReason, EQ_correctiveEventID,
+				orderBy, orderDirection, eventCountLimit,
 				maxEventCount, paramMap);
+		
 		if (reason != null) {
 			return makeErrorResult(reason, QueryParameterException.class);
 		}
@@ -540,7 +651,7 @@ public class MysqlQueryService {
 		// Make Base Result Document
 		EPCISQueryDocumentType epcisQueryDocumentType = makeBaseResultDocument(queryName);
 
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		QueryOprationBackend mysqlOperationdao=ctx.getBean
 				("queryOprationBackend", QueryOprationBackend.class);
 
@@ -566,6 +677,8 @@ public class MysqlQueryService {
 		 * the name of an extension event type. If omitted, all event types will
 		 * be considered for inclusion in the result.
 		 */
+		Configuration.logger.info("eventType"+ eventType);
+		
 		if (eventType != null) {
 			toGetAggregationEvent = false;
 			toGetObjectEvent = false;
@@ -607,10 +720,13 @@ public class MysqlQueryService {
 					MATCH_inputEPC, MATCH_outputEPC, MATCH_anyEPC,
 					MATCH_epcClass, MATCH_inputEPCClass, MATCH_outputEPCClass,
 					MATCH_anyEPCClass, EQ_quantity, GT_quantity, GE_quantity,
-					LT_quantity, LE_quantity, orderBy, orderDirection,
+					LT_quantity, LE_quantity, 
+					EQ_eventID, EXISTS_errorDeclaration,GE_errorDeclarationTime,
+					LT_errorDeclarationTime, EQ_errorReason, EQ_correctiveEventID,
+					orderBy, orderDirection,
 					eventCountLimit, maxEventCount, paramMap);
 			
-			
+			//Configuration.logger.info("AggregationEvent after criteria list");
 			List<AggregationEvent> aggregationEventList=criteria.list();
 			EventToEventTypeConverter conv=new EventToEventTypeConverter();
 			for(int i=0;(i<aggregationEventList.size())&&(eventCount<countLimit);i++,eventCount++){
@@ -636,11 +752,18 @@ public class MysqlQueryService {
 					MATCH_inputEPC, MATCH_outputEPC, MATCH_anyEPC,
 					MATCH_epcClass, MATCH_inputEPCClass, MATCH_outputEPCClass,
 					MATCH_anyEPCClass, EQ_quantity, GT_quantity, GE_quantity,
-					LT_quantity, LE_quantity, orderBy, orderDirection,
+					LT_quantity, LE_quantity, 
+					EQ_eventID, EXISTS_errorDeclaration,GE_errorDeclarationTime,
+					LT_errorDeclarationTime, EQ_errorReason, EQ_correctiveEventID,
+					orderBy, orderDirection,
 					eventCountLimit, maxEventCount, paramMap);
 			
-			
+			//Configuration.logger.info("ObjectEvent after criteria list");
+			 Configuration.logger.info("Before Criteria listed propoerly");
+			 
 			List<ObjectEvent> objectEventList=criteria.list();
+			
+			Configuration.logger.info("After Criteria listed propoerly");
 			EventToEventTypeConverter conv=new EventToEventTypeConverter();
 			for(int i=0;(i<objectEventList.size())&&(eventCount<countLimit);i++,eventCount++){
 				ObjectEvent objectEvent=objectEventList.get(i);
@@ -689,8 +812,10 @@ public class MysqlQueryService {
 					MATCH_inputEPC, MATCH_outputEPC, MATCH_anyEPC,
 					MATCH_epcClass, MATCH_inputEPCClass, MATCH_outputEPCClass,
 					MATCH_anyEPCClass, EQ_quantity, GT_quantity, GE_quantity,
-					LT_quantity, LE_quantity, orderBy, orderDirection,
-					eventCountLimit, maxEventCount, paramMap);	
+					LT_quantity, LE_quantity, 
+					EQ_eventID, EXISTS_errorDeclaration,GE_errorDeclarationTime,
+					LT_errorDeclarationTime, EQ_errorReason, EQ_correctiveEventID,
+					orderBy, orderDirection,eventCountLimit, maxEventCount, paramMap);	
 			
 			List<QuantityEvent> quantityEventList=criteria.list();
 			EventToEventTypeConverter conv=new EventToEventTypeConverter();
@@ -716,7 +841,10 @@ public class MysqlQueryService {
 					MATCH_inputEPC, MATCH_outputEPC, MATCH_anyEPC,
 					MATCH_epcClass, MATCH_inputEPCClass, MATCH_outputEPCClass,
 					MATCH_anyEPCClass, EQ_quantity, GT_quantity, GE_quantity,
-					LT_quantity, LE_quantity, orderBy, orderDirection,
+					LT_quantity, LE_quantity, 
+					EQ_eventID, EXISTS_errorDeclaration,GE_errorDeclarationTime,
+					LT_errorDeclarationTime, EQ_errorReason, EQ_correctiveEventID,
+					orderBy, orderDirection,
 					eventCountLimit, maxEventCount, paramMap);	
 			
 			List<TransactionEvent> transactionEventList=criteria.list();
@@ -744,7 +872,10 @@ public class MysqlQueryService {
 					MATCH_inputEPC, MATCH_outputEPC, MATCH_anyEPC,
 					MATCH_epcClass, MATCH_inputEPCClass, MATCH_outputEPCClass,
 					MATCH_anyEPCClass, EQ_quantity, GT_quantity, GE_quantity,
-					LT_quantity, LE_quantity, orderBy, orderDirection,
+					LT_quantity, LE_quantity, 
+					EQ_eventID, EXISTS_errorDeclaration,GE_errorDeclarationTime,
+					LT_errorDeclarationTime, EQ_errorReason, EQ_correctiveEventID,
+					orderBy, orderDirection,
 					eventCountLimit, maxEventCount, paramMap);	
 			
 			
@@ -784,7 +915,7 @@ public class MysqlQueryService {
 		// Make Base Result Document
 		EPCISQueryDocumentType epcisQueryDocumentType = makeBaseResultDocument(queryName);
 		
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		QueryOprationBackend mysqlOperationdao=ctx.getBean
 				("queryOprationBackend", QueryOprationBackend.class);
 
@@ -858,6 +989,7 @@ public class MysqlQueryService {
 	}
 
 	
+	
 	// Soap Service Adaptor
 	public String poll(String queryName, QueryParams queryParams) {
 		List<QueryParam> queryParamList = queryParams.getParam();
@@ -890,6 +1022,12 @@ public class MysqlQueryService {
 		String GE_quantity = null;
 		String LT_quantity = null;
 		String LE_quantity = null;
+		String EQ_eventID = null; 
+		Boolean EXISTS_errorDeclaration = null;
+		String GE_errorDeclarationTime = null;
+		String LT_errorDeclarationTime = null;
+		String EQ_errorReason = null;
+		String EQ_correctiveEventID = null;
 		String orderBy = null;
 		String orderDirection = null;
 		String eventCountLimit = null;
@@ -1043,8 +1181,10 @@ public class MysqlQueryService {
 				WD_bizLocation, EQ_transformationID, MATCH_epc, MATCH_parentID,
 				MATCH_inputEPC, MATCH_outputEPC, MATCH_anyEPC, MATCH_epcClass,
 				MATCH_inputEPCClass, MATCH_outputEPCClass, MATCH_anyEPCClass,
-				EQ_quantity, GT_quantity, GE_quantity, LT_quantity,
-				LE_quantity, orderBy, orderDirection, eventCountLimit,
+				EQ_quantity, GT_quantity, GE_quantity, LT_quantity,LE_quantity,
+				EQ_eventID, EXISTS_errorDeclaration,GE_errorDeclarationTime,
+				LT_errorDeclarationTime, EQ_errorReason, EQ_correctiveEventID,
+				orderBy, orderDirection, eventCountLimit,
 				maxEventCount, vocabularyName, includeAttributes,
 				includeChildren, attributeNames, EQ_name, WD_name, HASATTR,
 				maxElementCount, extMap);
@@ -1061,6 +1201,8 @@ public class MysqlQueryService {
 			String MATCH_inputEPCClass, String MATCH_outputEPCClass,
 			String MATCH_anyEPCClass, String EQ_quantity, String GT_quantity,
 			String GE_quantity, String LT_quantity, String LE_quantity,
+			String EQ_eventID, Boolean EXISTS_errorDeclaration, String GE_errorDeclarationTime,
+			String LT_errorDeclarationTime,String EQ_errorReason,String EQ_correctiveEventID,
 			String orderBy, String orderDirection, String eventCountLimit,
 			String maxEventCount,
 
@@ -1086,6 +1228,8 @@ public class MysqlQueryService {
 					MATCH_anyEPC, MATCH_epcClass, MATCH_inputEPCClass,
 					MATCH_outputEPCClass, MATCH_anyEPCClass, EQ_quantity,
 					GT_quantity, GE_quantity, LT_quantity, LE_quantity,
+					EQ_eventID, EXISTS_errorDeclaration,GE_errorDeclarationTime,
+					LT_errorDeclarationTime, EQ_errorReason, EQ_correctiveEventID,
 					orderBy, orderDirection, eventCountLimit, maxEventCount,
 					paramMap);
 
@@ -1107,6 +1251,11 @@ public class MysqlQueryService {
 			String MATCH_inputEPCClass, String MATCH_outputEPCClass,
 			String MATCH_anyEPCClass, String EQ_quantity, String GT_quantity,
 			String GE_quantity, String LT_quantity, String LE_quantity,
+			
+			
+			
+			String EQ_eventID, Boolean EXISTS_errorDeclaration, String GE_errorDeclarationTime,
+			String LT_errorDeclarationTime,String EQ_errorReason,String EQ_correctiveEventID,
 			String orderBy, String orderDirection, String eventCountLimit,
 			String maxEventCount, Map<String, String> paramMap) {
 
@@ -1201,6 +1350,8 @@ public class MysqlQueryService {
 		epcisBody.setQueryResults(queryResults);
 		QueryResultsBody queryResultsBody = new QueryResultsBody();
 		queryResults.setResultsBody(queryResultsBody);
+		
+		
 		EventListType eventListType = new EventListType();
 		queryResultsBody.setEventList(eventListType);
 		// Object instanceof JAXBElement
@@ -1210,7 +1361,27 @@ public class MysqlQueryService {
 		return epcisQueryDocumentType;
 	}
 
-	
+	public EPCISQueryDocumentType makeBaseResultDocument(String queryName, String subscriptionID) {
+		// Make Base Result Document
+		EPCISQueryDocumentType epcisQueryDocumentType = new EPCISQueryDocumentType();
+		EPCISQueryBodyType epcisBody = new EPCISQueryBodyType();
+		epcisQueryDocumentType.setEPCISBody(epcisBody);
+		QueryResults queryResults = new QueryResults();
+		queryResults.setQueryName(queryName);
+		epcisBody.setQueryResults(queryResults);
+		QueryResultsBody queryResultsBody = new QueryResultsBody();
+		queryResults.setResultsBody(queryResultsBody);
+		if(subscriptionID != null )
+			queryResults.setSubscriptionID(subscriptionID);
+		
+		EventListType eventListType = new EventListType();
+		queryResultsBody.setEventList(eventListType);
+		// Object instanceof JAXBElement
+		List<Object> eventObjects = new ArrayList<Object>();
+		eventListType
+				.setObjectEventOrAggregationEventOrQuantityEvent(eventObjects);
+		return epcisQueryDocumentType;
+	}
 
 		boolean isExtraParameter(String paramName) {
 
@@ -1242,87 +1413,90 @@ public class MysqlQueryService {
 	public void addScheduleToQuartz(SubscriptionType subscription) {
 		try {
 			JobDataMap map = new JobDataMap();
-			map.put("queryName", subscription.getQueryName());
+			map.put("queryName", subscription.getPollParameters().getQueryName());
 			map.put("subscriptionID", subscription.getSubscriptionID());
 			map.put("dest", subscription.getDest());
-			map.put("cronExpression", subscription.getCronExpression());
+			//map.put("cronExpression", subscription.getPollParameters().getCronExpression());
+			if(subscription.getPollParameters() != null){
+				
+			}
 
-			if (subscription.getEventType() != null)
-				map.put("eventType", subscription.getEventType());
-			if (subscription.getGE_eventTime() != null)
-				map.put("GE_eventTime", subscription.getGE_eventTime());
-			if (subscription.getLT_eventTime() != null)
-				map.put("LT_eventTime", subscription.getLT_eventTime());
-			if (subscription.getGE_recordTime() != null)
-				map.put("GE_recordTime", subscription.getGE_recordTime());
-			if (subscription.getLT_recordTime() != null)
-				map.put("LT_recordTime", subscription.getLT_recordTime());
-			if (subscription.getEQ_action() != null)
-				map.put("EQ_action", subscription.getEQ_action());
-			if (subscription.getEQ_bizStep() != null)
-				map.put("EQ_bizStep", subscription.getEQ_bizStep());
-			if (subscription.getEQ_disposition() != null)
-				map.put("EQ_disposition", subscription.getEQ_disposition());
-			if (subscription.getEQ_readPoint() != null)
-				map.put("EQ_readPoint", subscription.getEQ_readPoint());
-			if (subscription.getWD_readPoint() != null)
-				map.put("WD_readPoint", subscription.getWD_readPoint());
-			if (subscription.getEQ_bizLocation() != null)
-				map.put("EQ_bizLocation", subscription.getEQ_bizLocation());
-			if (subscription.getWD_bizLocation() != null)
-				map.put("WD_bizLocation", subscription.getWD_bizLocation());
-			if (subscription.getEQ_transformationID() != null)
+			if (subscription.getPollParameters().getEventType() != null)
+				map.put("eventType", subscription.getPollParameters().getEventType());
+			if (subscription.getPollParameters().getGE_eventTime() != null)
+				map.put("GE_eventTime", subscription.getPollParameters().getGE_eventTime());
+			if (subscription.getPollParameters().getLT_eventTime() != null)
+				map.put("LT_eventTime", subscription.getPollParameters().getLT_eventTime());
+			if (subscription.getPollParameters().getGE_recordTime() != null)
+				map.put("GE_recordTime", subscription.getPollParameters().getGE_recordTime());
+			if (subscription.getPollParameters().getLT_recordTime() != null)
+				map.put("LT_recordTime", subscription.getPollParameters().getLT_recordTime());
+			if (subscription.getPollParameters().getEQ_action() != null)
+				map.put("EQ_action", subscription.getPollParameters().getEQ_action());
+			if (subscription.getPollParameters().getEQ_bizStep() != null)
+				map.put("EQ_bizStep", subscription.getPollParameters().getEQ_bizStep());
+			if (subscription.getPollParameters().getEQ_disposition() != null)
+				map.put("EQ_disposition", subscription.getPollParameters().getEQ_disposition());
+			if (subscription.getPollParameters().getEQ_readPoint() != null)
+				map.put("EQ_readPoint", subscription.getPollParameters().getEQ_readPoint());
+			if (subscription.getPollParameters().getWD_readPoint() != null)
+				map.put("WD_readPoint", subscription.getPollParameters().getWD_readPoint());
+			if (subscription.getPollParameters().getEQ_bizLocation() != null)
+				map.put("EQ_bizLocation", subscription.getPollParameters().getEQ_bizLocation());
+			if (subscription.getPollParameters().getWD_bizLocation() != null)
+				map.put("WD_bizLocation", subscription.getPollParameters().getWD_bizLocation());
+			if (subscription.getPollParameters().getEQ_transformationID() != null)
 				map.put("EQ_transformationID",
-						subscription.getEQ_transformationID());
-			if (subscription.getMATCH_epc() != null)
-				map.put("MATCH_epc", subscription.getMATCH_epc());
-			if (subscription.getMATCH_parentID() != null)
-				map.put("MATCH_parentID", subscription.getMATCH_parentID());
-			if (subscription.getMATCH_inputEPC() != null)
-				map.put("MATCH_inputEPC", subscription.getMATCH_inputEPC());
-			if (subscription.getMATCH_outputEPC() != null)
-				map.put("MATCH_outputEPC", subscription.getMATCH_outputEPC());
-			if (subscription.getMATCH_anyEPC() != null)
-				map.put("MATCH_anyEPC", subscription.getMATCH_anyEPC());
-			if (subscription.getMATCH_epcClass() != null)
-				map.put("MATCH_epcClass", subscription.getMATCH_epcClass());
-			if (subscription.getMATCH_inputEPCClass() != null)
+						subscription.getPollParameters().getEQ_transformationID());
+			if (subscription.getPollParameters().getMATCH_epc() != null)
+				map.put("MATCH_epc", subscription.getPollParameters().getMATCH_epc());
+			if (subscription.getPollParameters().getMATCH_parentID() != null)
+				map.put("MATCH_parentID", subscription.getPollParameters().getMATCH_parentID());
+			if (subscription.getPollParameters().getMATCH_inputEPC() != null)
+				map.put("MATCH_inputEPC", subscription.getPollParameters().getMATCH_inputEPC());
+			if (subscription.getPollParameters().getMATCH_outputEPC() != null)
+				map.put("MATCH_outputEPC", subscription.getPollParameters().getMATCH_outputEPC());
+			if (subscription.getPollParameters().getMATCH_anyEPC() != null)
+				map.put("MATCH_anyEPC", subscription.getPollParameters().getMATCH_anyEPC());
+			if (subscription.getPollParameters().getMATCH_epcClass() != null)
+				map.put("MATCH_epcClass", subscription.getPollParameters().getMATCH_epcClass());
+			if (subscription.getPollParameters().getMATCH_inputEPCClass() != null)
 				map.put("MATCH_inputEPCClass",
-						subscription.getMATCH_inputEPCClass());
-			if (subscription.getMATCH_outputEPCClass() != null)
+						subscription.getPollParameters().getMATCH_inputEPCClass());
+			if (subscription.getPollParameters().getMATCH_outputEPCClass() != null)
 				map.put("MATCH_outputEPCClass",
-						subscription.getMATCH_outputEPCClass());
-			if (subscription.getMATCH_anyEPCClass() != null)
+						subscription.getPollParameters().getMATCH_outputEPCClass());
+			if (subscription.getPollParameters().getMATCH_anyEPCClass() != null)
 				map.put("MATCH_anyEPCClass",
-						subscription.getMATCH_anyEPCClass());
-			if (subscription.getEQ_quantity() != null)
-				map.put("EQ_quantity", subscription.getEQ_quantity());
-			if (subscription.getGT_quantity() != null)
-				map.put("GT_quantity", subscription.getGT_quantity());
-			if (subscription.getGE_quantity() != null)
-				map.put("GE_quantity", subscription.getGE_quantity());
-			if (subscription.getLT_quantity() != null)
-				map.put("LT_quantity", subscription.getLT_quantity());
-			if (subscription.getLE_quantity() != null)
-				map.put("LE_quantity", subscription.getLE_quantity());
-			if (subscription.getOrderBy() != null)
-				map.put("orderBy", subscription.getOrderBy());
-			if (subscription.getOrderDirection() != null)
-				map.put("orderDirection", subscription.getOrderDirection());
-			if (subscription.getEventCountLimit() != null)
-				map.put("eventCountLimit", subscription.getEventCountLimit());
-			if (subscription.getMaxEventCount() != null)
-				map.put("maxEventCount", subscription.getMaxEventCount());
-			if (subscription.getParamMap() != null )
-				map.put("paramMap", subscription.getParamMap());
+						subscription.getPollParameters().getMATCH_anyEPCClass());
+			if (subscription.getPollParameters().getEQ_quantity() != null)
+				map.put("EQ_quantity", subscription.getPollParameters().getEQ_quantity());
+			if (subscription.getPollParameters().getGT_quantity() != null)
+				map.put("GT_quantity", subscription.getPollParameters().getGT_quantity());
+			if (subscription.getPollParameters().getGE_quantity() != null)
+				map.put("GE_quantity", subscription.getPollParameters().getGE_quantity());
+			if (subscription.getPollParameters().getLT_quantity() != null)
+				map.put("LT_quantity", subscription.getPollParameters().getLT_quantity());
+			if (subscription.getPollParameters().getLE_quantity() != null)
+				map.put("LE_quantity", subscription.getPollParameters().getLE_quantity());
+			if (subscription.getPollParameters().getOrderBy() != null)
+				map.put("orderBy", subscription.getPollParameters().getOrderBy());
+			if (subscription.getPollParameters().getOrderDirection() != null)
+				map.put("orderDirection", subscription.getPollParameters().getOrderDirection());
+			if (subscription.getPollParameters().getEventCountLimit() != null)
+				map.put("eventCountLimit", subscription.getPollParameters().getEventCountLimit());
+			if (subscription.getPollParameters().getMaxEventCount() != null)
+				map.put("maxEventCount", subscription.getPollParameters().getMaxEventCount());
+			if (subscription.getPollParameters().getParams() != null )
+				map.put("paramMap", subscription.getPollParameters().getParams());
 			
 			JobDetail job = newJob(MysqlSubscriptionTask.class)
-					.withIdentity(subscription.getSubscriptionID(), subscription.getQueryName()).setJobData(map)
+					.withIdentity(subscription.getSubscriptionID(), subscription.getPollParameters().getQueryName()).setJobData(map)
 					.storeDurably(false).build();
 
 			Trigger trigger = newTrigger()
-					.withIdentity(subscription.getSubscriptionID(), subscription.getQueryName()).startNow()
-					.withSchedule(cronSchedule(subscription.getCronExpression())).build();
+					.withIdentity(subscription.getSubscriptionID(), subscription.getPollParameters().getQueryName()).startNow()
+					.withSchedule(cronSchedule(subscription.getSchedule())).build();
 			
 			// ClassPathXmlApplicationContext context = new
 			// ClassPathXmlApplicationContext(
@@ -1337,7 +1511,7 @@ public class MysqlQueryService {
 	//				+ subscription.getSubscriptionID()
 	//				+ " is added to quartz scheduler. ");
 		} catch (SchedulerException e) {
-	//		Configuration.logger.log(Level.ERROR, e.toString());
+			Configuration.logger.log(Level.ERROR, e.toString());
 		}
 	}
 
@@ -1468,20 +1642,31 @@ public class MysqlQueryService {
 			String maxEventCount, Map<String, String> paramMap) {
 		
 		
-		
-		SubscriptionType st = new SubscriptionType(queryName, subscriptionID,
-				dest, cronExpression, reportIfEmpty, initialRecordTime,
-				eventType, GE_eventTime, LT_eventTime, GE_recordTime,
-				LT_recordTime, EQ_action, EQ_bizStep, EQ_disposition,
+		PollParameters pollparam= new PollParameters(queryName, eventType, GE_eventTime, LT_eventTime,
+				GE_recordTime, LT_recordTime, EQ_action, EQ_bizStep, EQ_disposition,
 				EQ_readPoint, WD_readPoint, EQ_bizLocation, WD_bizLocation,
 				EQ_transformationID, MATCH_epc, MATCH_parentID, MATCH_inputEPC,
-				MATCH_outputEPC, MATCH_anyEPC, MATCH_epcClass,
-				MATCH_inputEPCClass, MATCH_outputEPCClass, MATCH_anyEPCClass,
-				EQ_quantity, GT_quantity, GE_quantity, LT_quantity,
-				LE_quantity, orderBy, orderDirection, eventCountLimit,
-				maxEventCount, paramMap);
+				MATCH_outputEPC, MATCH_anyEPC, MATCH_epcClass, MATCH_inputEPCClass,
+				MATCH_outputEPCClass, MATCH_anyEPCClass, Integer.parseInt(EQ_quantity), Integer.parseInt(GT_quantity),
+				Integer.parseInt(GE_quantity), Integer.parseInt(LT_quantity), Integer.parseInt(LE_quantity), "",
+				Boolean.parseBoolean("false"), "", "",
+				"",  "",  orderBy,  orderDirection,
+				Integer.parseInt(eventCountLimit), Integer.parseInt(maxEventCount),  "", false,
+				false,  "",  "",  "",  "",
+				1200,  "", paramMap);
+				
+	
 		
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		Subscription st = new Subscription();
+		st.setDest(dest);
+		st.setSubscriptionID(subscriptionID);
+		st.setPollParametrs(pollparam);
+		st.setInitialRecordTime(initialRecordTime);
+		st.setReportIfEmpty(reportIfEmpty);
+		//st.setTrigger(trigger);
+		
+		
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		QueryOprationBackend mysqlOperationdao=ctx.getBean
 				("queryOprationBackend", QueryOprationBackend.class);
 
@@ -1506,7 +1691,7 @@ public class MysqlQueryService {
 	@SuppressWarnings("resource")
 	public List<String> checking(){
 		System.out.println("1 here");
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		QueryOprationBackend mysqlOperationdao=ctx.getBean
 				("queryOprationBackend", QueryOprationBackend.class);
 		List<String> ids=mysqlOperationdao.select();
@@ -1514,10 +1699,11 @@ public class MysqlQueryService {
 		
 		return ids;
 	}
+	
 	@SuppressWarnings("resource")
 	public List<String> checking2(){
 		System.out.println("1 here");
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		QueryOprationBackend mysqlOperationdao=ctx.getBean
 				("queryOprationBackend", QueryOprationBackend.class);
 		List<String> ids=mysqlOperationdao.findVocabilaryChildren("urn:epcglobal:epcis:vtype:BusinessLocation","urn:epc:id:sgln:0037000.%");//00729.0");
@@ -1528,7 +1714,7 @@ public class MysqlQueryService {
 	@SuppressWarnings({ "resource", "unchecked" })
 	public List<String> checking3(){
 		System.out.println("checking3 here");
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		QueryOprationBackend mysqlOperationdao=ctx.getBean
 				("queryOprationBackend", QueryOprationBackend.class);
 		List<String> ids=new ArrayList<String>();
@@ -1547,7 +1733,7 @@ public class MysqlQueryService {
 	@SuppressWarnings("resource")
 	public List<Vocabulary> checking4(){
 		System.out.println("checking4 here");
-		ApplicationContext ctx=new ClassPathXmlApplicationContext("MysqlConfig.xml");
+		ApplicationContext ctx=new ClassPathXmlApplicationContext(Configuration.DB);
 		QueryOprationBackend mysqlOperationdao=ctx.getBean
 				("queryOprationBackend", QueryOprationBackend.class);
 		
@@ -1561,10 +1747,10 @@ public class MysqlQueryService {
 		try {
 			MysqlSubscription.sched.unscheduleJob(triggerKey(
 					subscription.getSubscriptionID(),
-					subscription.getQueryName()));
+					subscription.getPollParameters().getQueryName()));
 			MysqlSubscription.sched.deleteJob(jobKey(
 					subscription.getSubscriptionID(),
-					subscription.getQueryName()));
+					subscription.getPollParameters().getQueryName()));
 			Configuration.logger.log(Level.INFO, "Subscription ID: "
 					+ subscription + " is removed from scheduler");
 		} catch (SchedulerException e) {

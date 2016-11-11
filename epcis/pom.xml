@@ -4,7 +4,7 @@
 	<groupId>org.oliot</groupId>
 	<artifactId>epcis</artifactId>
 	<packaging>war</packaging>
-	<version>1.1.6</version>
+	<version>1.2.3</version>
 	<name>epcis Maven Webapp</name>
 	<url>http://maven.apache.org</url>
 	<properties>
@@ -26,7 +26,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.11</version>
+			<version>4.12</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sun.xml.bind</groupId>
@@ -51,12 +51,12 @@
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
-			<version>3.0.4</version>
+			<version>3.2.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20140107</version>
+			<version>20160212</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
@@ -86,37 +86,23 @@
 			<version>4.0.6.RELEASE</version>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.data</groupId>
-			<artifactId>spring-data-mongodb</artifactId>
-			<version>1.8.0.RELEASE</version>
-		</dependency>
-		<dependency>
 			<groupId>cglib</groupId>
 			<artifactId>cglib</artifactId>
-			<version>3.1</version>
+			<version>3.2.1</version>
 		</dependency>
+
+		<!-- Quartz Scheduler -->
 		<dependency>
 			<groupId>org.quartz-scheduler</groupId>
 			<artifactId>quartz</artifactId>
-			<version>2.2.1</version>
+			<version>2.2.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.quartz-scheduler</groupId>
 			<artifactId>quartz-jobs</artifactId>
-			<version>2.2.1</version>
+			<version>2.2.2</version>
 		</dependency>
-		<dependency>
-			<groupId>com.github.fge</groupId>
-			<artifactId>json-schema-validator</artifactId>
-			<version>2.2.6</version>
-		</dependency>
-		<dependency>
-			<groupId>com.googlecode.json-simple</groupId>
-			<artifactId>json-simple</artifactId>
-			<version>1.1.1</version>
-		</dependency>
-
-
+		
 		<!-- CXF Web Service -->
 		<dependency>
 			<groupId>org.apache.cxf</groupId>
@@ -129,82 +115,82 @@
 			<version>2.7.11</version>
 		</dependency>
 
-		<!-- Koloboke for Big collection -->
-		<dependency>
-			<groupId>net.openhft</groupId>
-			<artifactId>koloboke-impl-jdk6-7</artifactId>
-			<version>0.6.7</version>
-		</dependency>
-
 		<!-- REST FB -->
 		<dependency>
 			<groupId>com.restfb</groupId>
 			<artifactId>restfb</artifactId>
 			<version>1.14.1</version>
-		</dependency>	
+		</dependency>
+
 		<dependency>
-			<groupId>org.oliot</groupId>
-			<artifactId>gcp</artifactId>
-			<version>0.0.3</version>	
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpcore</artifactId>
+			<version>4.4.4</version>
 		</dependency>
 		
-		<!-- MySQL -->
+		<!-- MySQL START -->
 		
 		<!-- Added for handling hibernate -->
 		<dependency> 
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
-			<version>3.6.10.Final</version>
+			  <version>3.6.10.Final</version> 
+			<!--<version>4.1.4.Final</version>-->
 		</dependency>
+		
 		<!-- Added for handling dbcp-jdbc -->
 		<dependency> 
 			<groupId>commons-dbcp</groupId>
 			<artifactId>commons-dbcp</artifactId>
-		<version>1.2.2</version>
+			<version>1.2.2</version>
 		</dependency>
+		
 		<!-- Added for handling mysql -->
 		<dependency>
 			<groupId>org.springframework.data</groupId> 
   		  	<artifactId>spring-data-jdbc-core</artifactId>
  		  	 <version>1.0.0.RELEASE</version>
 		</dependency>
+		
 		<!-- Added for handling mysql -->
 		<dependency>  
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>5.1.9</version>
         </dependency>
-        		<dependency>
-   		 <groupId>org.springframework</groupId>
-   			 <artifactId>spring-orm</artifactId>
+        
+        <dependency>
+   			<groupId>org.springframework</groupId>
+   			<artifactId>spring-orm</artifactId>
     		<version>3.1.1.RELEASE</version>
 		</dependency>
 		
 		<dependency>
-    	<groupId>javassist</groupId>
-    			<artifactId>javassist</artifactId>
-    			<version>3.12.1.GA</version>
+    		<groupId>javassist</groupId>
+    		<artifactId>javassist</artifactId>
+    		<version>3.12.1.GA</version>
 		</dependency>
-		
-		<!-- amqp -->
-		<!-- https://mvnrepository.com/artifact/org.springframework.amqp/spring-rabbit -->
+		<!-- MySQL END -->
+		<!-- Postgresql -->
 		<dependency>
-   			<groupId>org.springframework.amqp</groupId>
-    		<artifactId>spring-rabbit</artifactId>
-    		<version>1.6.3.RELEASE</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.apache.cxf/cxf-bundle-jaxrs -->
+                  <groupId>org.postgresql</groupId>
+                  <artifactId>postgresql</artifactId>
+                  <version>9.3-1102-jdbc41</version>
+         </dependency>
+        <!-- Postgresql -->
+		<!--  Temp Start -->
 		<dependency>
-    		<groupId>org.apache.cxf</groupId>
-    		<artifactId>cxf-bundle-jaxrs</artifactId>
-    		<version>2.7.18</version>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-mongodb</artifactId>
+			<version>1.8.0.RELEASE</version>
 		</dependency>
+		<!--  Temp End -->
 		
 	</dependencies>
 	<build>
 		<finalName>epcis</finalName>
 	</build>
-	
+
 	<repositories>
 		<repository>
 			<id>epcis.local</id>
@@ -212,5 +198,5 @@
 			<url>file:${project.basedir}/libs</url>
 		</repository>
 	</repositories>
-	
+
 </project>

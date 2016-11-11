@@ -22,13 +22,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.ServletContextAware;
 
 /**
- * Copyright (C) 2014 Jaewook Byun
+ * Copyright (C) 2014-2016 Jaewook Byun
  *
- * This project is part of Oliot (oliot.org), pursuing the implementation of
- * Electronic Product Code Information Service(EPCIS) v1.1 specification in
- * EPCglobal.
- * [http://www.gs1.org/gsmp/kc/epcglobal/epcis/epcis_1_1-standard-20140520.pdf]
- * 
+ * This project is part of Oliot open source (http://oliot.org). Oliot EPCIS
+ * v1.2.x is Java Web Service complying with Electronic Product Code Information
+ * Service (EPCIS) v1.2.
  *
  * @author Jaewook Jack Byun, Ph.D student
  * 
@@ -59,8 +57,9 @@ public class EventCapture implements ServletContextAware {
 	@RequestMapping(method = RequestMethod.POST)
 	@ResponseBody
 	public ResponseEntity<?> post(@RequestBody String inputString, @RequestParam(required = false) String userID,
-			@RequestParam(required = false) String accessToken, @RequestParam(required = false) String accessModifier, @RequestParam(required = false) Integer gcpLength) {
-
+			@RequestParam(required = false) String accessToken, @RequestParam(required = false) String accessModifier,
+			@RequestParam(required = false) Integer gcpLength) {
+		String errorMessage = null;
 		// Request a protection on events
 		if (userID != null) {
 			// Check accessToken
@@ -81,7 +80,7 @@ public class EventCapture implements ServletContextAware {
 		if (Configuration.isCaptureVerfificationOn == true) {
 			InputStream validateStream = CaptureUtil.getXMLDocumentInputStream(inputString);
 			boolean isValidated = CaptureUtil.validate(validateStream,
-					Configuration.wsdlPath + "/EPCglobal-epcis-1_2_jack.xsd");
+					Configuration.wsdlPath + "/EPCglobal-epcis-1_2.xsd");
 			if (isValidated == false) {
 				// M63
 				return new ResponseEntity<>(new String("Error M63"), HttpStatus.BAD_REQUEST);
@@ -95,9 +94,9 @@ public class EventCapture implements ServletContextAware {
 				if (epcisDocument.getEPCISHeader().getStandardBusinessDocumentHeader() != null) {
 					StandardBusinessDocumentHeader header = epcisDocument.getEPCISHeader()
 							.getStandardBusinessDocumentHeader();
-					if (header.getHeaderVersion() == null || !header.getHeaderVersion().equals("1.1")) {
-						Configuration.logger.error(" HeaderVersion should 1.1 if use SBDH ");
-						return new ResponseEntity<>(new String("Error: HeaderVersion should 1.1 if use SBDH"),
+					if (header.getHeaderVersion() == null || !header.getHeaderVersion().equals("1.2")) {
+						Configuration.logger.error(" HeaderVersion should 1.2 if use SBDH ");
+						return new ResponseEntity<>(new String("Error: HeaderVersion should 1.2 if use SBDH"),
 								HttpStatus.BAD_REQUEST);
 					}
 					if (header.getDocumentIdentification() == null) {
@@ -123,27 +122,29 @@ public class EventCapture implements ServletContextAware {
 											"Error: DocumentIdentification/Type should Events|MasterData in Capture Method if use SBDH"),
 									HttpStatus.BAD_REQUEST);
 						}
-						if (docID.getTypeVersion() == null | !docID.getTypeVersion().equals("1.1")) {
-							Configuration.logger.error(" DocumentIdentification/TypeVersion should 1.1 if use SBDH ");
+						if (docID.getTypeVersion() == null | !docID.getTypeVersion().equals("1.2")) {
+							Configuration.logger.error(" DocumentIdentification/TypeVersion should 1.2 if use SBDH ");
 							return new ResponseEntity<>(
-									new String("Error: DocumentIdentification/TypeVersion should 1.1 if use SBDH"),
+									new String("Error: DocumentIdentification/TypeVersion should 1.2 if use SBDH"),
 									HttpStatus.BAD_REQUEST);
 						}
 
 					}
 				}
 			}
-
 			CaptureService cs = new CaptureService();
-			cs.capture(epcisDocument, userID, accessModifier, gcpLength);
+			errorMessage = cs.capture(epcisDocument, userID, accessModifier, gcpLength);
 			Configuration.logger.info(" EPCIS Document : Captured ");
 		} else {
 			InputStream epcisStream = CaptureUtil.getXMLDocumentInputStream(inputString);
 			EPCISDocumentType epcisDocument = JAXB.unmarshal(epcisStream, EPCISDocumentType.class);
 			CaptureService cs = new CaptureService();
-			cs.capture(epcisDocument, userID, accessModifier, gcpLength);
+			errorMessage = cs.capture(epcisDocument, userID, accessModifier, gcpLength);
 			Configuration.logger.info(" EPCIS Document : Captured ");
 		}
-		return new ResponseEntity<>(new String("EPCIS Document : Captured "), HttpStatus.OK);
+		if( errorMessage == null )
+			return new ResponseEntity<>(new String("EPCIS Document : Captured "), HttpStatus.OK);
+		else
+			return new ResponseEntity<>(errorMessage, HttpStatus.BAD_REQUEST);
 	}
 }

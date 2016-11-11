@@ -40,7 +40,9 @@ public class AggregationEvent {
     @XmlElement(required = true)
     protected String eventTimeZoneOffset;
     
-    
+    @OneToOne
+	@JoinColumn(name="baseExtension_id")
+    protected EPCISEventExtension baseExtension;
        
     protected String parentID;
     @OneToOne
@@ -71,6 +73,9 @@ public class AggregationEvent {
 	@JoinColumn(name="extension_id")
     protected AggregationEventExtension extension;
     
+    @OneToOne
+    @JoinColumn(name="baseExtensionMaps_id")
+    protected ExtensionMaps extensionMaps;
     
     @Transient
     @XmlAnyElement(lax = true)
@@ -134,6 +139,20 @@ public class AggregationEvent {
 
 	public void setEventTimeZoneOffset(String eventTimeZoneOffset) {
 		this.eventTimeZoneOffset = eventTimeZoneOffset;
+	}
+
+
+
+
+	public EPCISEventExtension getBaseExtension() {
+		return baseExtension;
+	}
+
+
+
+
+	public void setBaseExtension(EPCISEventExtension baseExtension) {
+		this.baseExtension = baseExtension;
 	}
 
 
@@ -284,6 +303,20 @@ public class AggregationEvent {
         }
         return this.any;
     }
+
+
+
+
+	public ExtensionMaps getExtensionMaps() {
+		return extensionMaps;
+	}
+
+
+
+
+	public void setExtensionMaps(ExtensionMaps extensionMaps) {
+		this.extensionMaps = extensionMaps;
+	}
 
 
 
