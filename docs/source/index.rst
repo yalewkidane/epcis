@@ -25,11 +25,3 @@ Oliot EPCIS is a Java Web Service implementing the EPCIS standard in terms of it
 
    usage
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
